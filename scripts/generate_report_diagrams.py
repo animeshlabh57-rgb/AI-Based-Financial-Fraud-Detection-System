@@ -41,44 +41,49 @@ def generate_system_architecture():
     ax.annotate("", xy=(6.0, 5.6), xytext=(5.4, 5.6), arrowprops=dict(arrowstyle="->", lw=2, color=c_blue))
 
     # Model Containers Box
-    ax.add_patch(patches.Rectangle((6.0, 1.8), 3.5, 4.6, fc="#f2f2f2", ec="#808080", lw=1.5, ls="--"))
-    ax.text(7.75, 6.15, "Concurrent Multi-Model Scoring Engine", ha="center", va="center", fontsize=10, fontweight="bold", color="#333333")
+    ax.add_patch(patches.Rectangle((5.8, 1.4), 3.9, 5.0, fc="#f2f2f2", ec="#808080", lw=1.5, ls="--"))
+    ax.text(7.75, 6.15, "Concurrent Multi-Model Scoring Engine", ha="center", va="center", fontsize=9.5, fontweight="bold", color="#333333")
 
     # Model 1: XGBoost
-    ax.add_patch(patches.FancyBboxPatch((6.3, 4.8), 2.9, 0.9, boxstyle="round,pad=0.08", fc="#ffffff", ec=c_accent, lw=1.2))
-    ax.text(7.75, 5.25, "XGBoost Classifier (P_XGB)\n120 Trees, Learning Rate 0.08", ha="center", va="center", fontsize=8.5, fontweight="bold")
+    ax.add_patch(patches.FancyBboxPatch((6.0, 5.0), 3.5, 0.85, boxstyle="round,pad=0.08", fc="#ffffff", ec=c_accent, lw=1.2))
+    ax.text(7.75, 5.42, "XGBoost Classifier (P_XGB)\n120 Trees, Hist Gradient Boosting", ha="center", va="center", fontsize=8, fontweight="bold")
 
     # Model 2: Random Forest
-    ax.add_patch(patches.FancyBboxPatch((6.3, 3.5), 2.9, 0.9, boxstyle="round,pad=0.08", fc="#ffffff", ec=c_accent, lw=1.2))
-    ax.text(7.75, 3.95, "Random Forest (P_RF)\n100-150 Trees, Balanced Subsample", ha="center", va="center", fontsize=8.5, fontweight="bold")
+    ax.add_patch(patches.FancyBboxPatch((6.0, 3.8), 3.5, 0.85, boxstyle="round,pad=0.08", fc="#ffffff", ec=c_accent, lw=1.2))
+    ax.text(7.75, 4.22, "Random Forest (P_RF)\n100-150 Trees, Balanced Subsample", ha="center", va="center", fontsize=8, fontweight="bold")
 
-    # Model 3: Deep Autoencoder + Platt
-    ax.add_patch(patches.FancyBboxPatch((6.3, 2.2), 2.9, 0.9, boxstyle="round,pad=0.08", fc="#ffffff", ec=c_accent, lw=1.2))
-    ax.text(7.75, 2.65, "Deep Autoencoder + Platt Calibrator\ne(x) -> Logistic P_AE in [0, 1]", ha="center", va="center", fontsize=8.5, fontweight="bold")
+    # Model 3: Deep Neural Network
+    ax.add_patch(patches.FancyBboxPatch((6.0, 2.6), 3.5, 0.85, boxstyle="round,pad=0.08", fc="#ffffff", ec=c_accent, lw=1.2))
+    ax.text(7.75, 3.02, "Deep Neural Network (P_DNN)\nMulti-Layer Perceptron (ReLU / Adam)", ha="center", va="center", fontsize=8, fontweight="bold")
 
-    # Weighted Consensus Node
-    ax.add_patch(patches.Circle((4.3, 2.7), 1.0, fc=c_gold, ec="#b25900", lw=1.8))
-    ax.text(4.3, 2.7, "Weighted\nConsensus\nR(x)", ha="center", va="center", fontsize=9.5, fontweight="bold", color="#7f3300")
+    # Model 4: Deep Autoencoder
+    ax.add_patch(patches.FancyBboxPatch((6.0, 1.55), 3.5, 0.85, boxstyle="round,pad=0.08", fc="#ffffff", ec=c_accent, lw=1.2))
+    ax.text(7.75, 1.97, "Deep Autoencoder (P_AE)\nBottleneck Reconstruction MSE", ha="center", va="center", fontsize=8, fontweight="bold")
+
+    # Consensus Engine Node
+    ax.add_patch(patches.Circle((4.1, 2.7), 1.05, fc=c_gold, ec="#b25900", lw=1.8))
+    ax.text(4.1, 2.7, "Consensus\nVoting &\nScore", ha="center", va="center", fontsize=9, fontweight="bold", color="#7f3300")
 
     # Arrows from models to consensus
-    ax.annotate("", xy=(5.3, 2.9), xytext=(6.3, 5.25), arrowprops=dict(arrowstyle="->", lw=1.5, color="#555555"))
-    ax.annotate("", xy=(5.3, 2.7), xytext=(6.3, 3.95), arrowprops=dict(arrowstyle="->", lw=1.5, color="#555555"))
-    ax.annotate("", xy=(5.3, 2.5), xytext=(6.3, 2.65), arrowprops=dict(arrowstyle="->", lw=1.5, color="#555555"))
+    ax.annotate("", xy=(5.15, 3.2), xytext=(6.0, 5.42), arrowprops=dict(arrowstyle="->", lw=1.5, color="#555555"))
+    ax.annotate("", xy=(5.15, 2.9), xytext=(6.0, 4.22), arrowprops=dict(arrowstyle="->", lw=1.5, color="#555555"))
+    ax.annotate("", xy=(5.15, 2.6), xytext=(6.0, 3.02), arrowprops=dict(arrowstyle="->", lw=1.5, color="#555555"))
+    ax.annotate("", xy=(5.15, 2.3), xytext=(6.0, 1.97), arrowprops=dict(arrowstyle="->", lw=1.5, color="#555555"))
 
     # Output Decision Box
-    ax.add_patch(patches.FancyBboxPatch((0.5, 2.1), 2.4, 1.2, boxstyle="round,pad=0.1", fc=c_green, ec="#385723", lw=1.5))
-    ax.text(1.7, 2.7, "Risk Tier & Action Mapping\n[ALLOW / CHALLENGE /\nREVIEW / BLOCK]", ha="center", va="center", fontsize=9, fontweight="bold", color="#274e13")
+    ax.add_patch(patches.FancyBboxPatch((0.4, 2.05), 2.5, 1.3, boxstyle="round,pad=0.1", fc=c_green, ec="#385723", lw=1.5))
+    ax.text(1.65, 2.7, "Risk Scoring &\nReview Flag\n[LOW / REVIEW / HIGH]", ha="center", va="center", fontsize=8.5, fontweight="bold", color="#274e13")
 
     # Arrow from Consensus to Decision
-    ax.annotate("", xy=(2.9, 2.7), xytext=(3.3, 2.7), arrowprops=dict(arrowstyle="->", lw=2, color="#274e13"))
+    ax.annotate("", xy=(2.9, 2.7), xytext=(3.05, 2.7), arrowprops=dict(arrowstyle="->", lw=2, color="#274e13"))
 
     # Explainability Box (On Request)
-    ax.add_patch(patches.FancyBboxPatch((2.2, 0.4), 4.2, 1.1, boxstyle="round,pad=0.1", fc=c_alert, ec="#c00000", lw=1.5))
-    ax.text(4.3, 0.95, "Explainable AI Engine (On-Demand)\nTreeSHAP Global / LIME Local / Balance Discrepancy", ha="center", va="center", fontsize=9, fontweight="bold", color="#900000")
+    ax.add_patch(patches.FancyBboxPatch((2.0, 0.35), 4.4, 1.15, boxstyle="round,pad=0.1", fc=c_alert, ec="#c00000", lw=1.5))
+    ax.text(4.2, 0.92, "Explainable AI & Forensics (On-Demand)\nTreeSHAP Local Attributions / Balance Forensics (Delta_orig, Delta_dest)", ha="center", va="center", fontsize=8, fontweight="bold", color="#900000")
 
     # Arrow from Decision/Consensus to Explainability
-    ax.annotate("On Flagged / Request", xy=(4.3, 1.5), xytext=(4.3, 1.7), ha="center", fontsize=8, color="#900000")
-    ax.annotate("", xy=(4.3, 1.5), xytext=(4.3, 2.0), arrowprops=dict(arrowstyle="->", lw=1.5, ls="--", color="#c00000"))
+    ax.annotate("On Flagged / Review", xy=(4.1, 1.5), xytext=(4.1, 1.65), ha="center", fontsize=7.5, color="#900000")
+    ax.annotate("", xy=(4.1, 1.5), xytext=(4.1, 1.8), arrowprops=dict(arrowstyle="->", lw=1.5, ls="--", color="#c00000"))
 
     plt.tight_layout()
     out_path = os.path.join(OUTPUT_DIR, "system_architecture.png")
@@ -116,18 +121,18 @@ def generate_dfd_diagram():
     ax.add_patch(patches.Circle((7.2, 3.0), 0.9, fc="#d5e8d4", ec="#82b366", lw=1.5))
     ax.text(7.2, 3.0, "3.0\nMulti-Model\nScoring", ha="center", va="center", fontsize=8.5, fontweight="bold")
 
-    # Data Store D2: Model Checkpoints & Platt Weights
+    # Data Store D2: Model Checkpoints
     ax.plot([8.6, 9.7], [3.3, 3.3], color="#333333", lw=1.5)
     ax.plot([8.6, 9.7], [2.8, 2.8], color="#333333", lw=1.5)
     ax.text(9.15, 3.05, "D2: Model Artifacts", ha="center", va="center", fontsize=8)
 
-    # Process 4.0: Consensus Fusion & Risk Tiers
+    # Process 4.0: Consensus Voting & Risk Scoring
     ax.add_patch(patches.Circle((4.0, 3.0), 0.9, fc="#d5e8d4", ec="#82b366", lw=1.5))
-    ax.text(4.0, 3.0, "4.0\nConsensus\nFusion R(x)", ha="center", va="center", fontsize=8.5, fontweight="bold")
+    ax.text(4.0, 3.0, "4.0\nConsensus\nVoting & Score", ha="center", va="center", fontsize=8.5, fontweight="bold")
 
     # Process 5.0: Explainability & Audit Log
     ax.add_patch(patches.Circle((4.0, 1.1), 0.8, fc="#ffe6cc", ec="#d79b00", lw=1.5))
-    ax.text(4.0, 1.1, "5.0\nSHAP/LIME &\nAudit Log", ha="center", va="center", fontsize=8, fontweight="bold")
+    ax.text(4.0, 1.1, "5.0\nTreeSHAP &\nAudit Log", ha="center", va="center", fontsize=8, fontweight="bold")
 
     # Entity: Fraud Analyst Dashboard
     ax.add_patch(patches.Rectangle((0.4, 2.4), 1.8, 1.2, fc="#fff2cc", ec="#d6b656", lw=1.5))
@@ -251,8 +256,8 @@ def generate_class_diagram():
 
     # Class 2: MultiModelPredictor (Base)
     draw_class_box(3.7, 3.8, 2.7, 2.8, "ConsensusEngine",
-                   ["- rf_model: RandomForest", "- xgb_model: XGBClassifier", "- autoencoder: MLPRegressor", "- platt_calibrator: Logistic"],
-                   ["+ predict_all(X: array)", "+ compute_consensus(p_vec)", "+ assign_risk_tier(score)", "+ explain_shap(sample)"])
+                   ["- rf_model: RandomForest", "- xgb_model: XGBClassifier", "- dnn_model: MLPClassifier", "- autoencoder: MLPRegressor"],
+                   ["+ predict_all(X: array)", "+ evaluate_consensus()", "+ get_fraud_votes(scores)", "+ explain_shap(sample)"])
 
     # Class 3: KafkaStreamingConsumer
     draw_class_box(6.8, 3.8, 2.8, 2.8, "FraudStreamingConsumer",

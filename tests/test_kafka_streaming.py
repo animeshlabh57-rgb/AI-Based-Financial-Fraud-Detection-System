@@ -338,6 +338,92 @@ class TestKafkaStreaming(unittest.TestCase):
         self.assertEqual(consumer.dlq_published, 1)
         self.assertEqual(self.broker.topic_size(self.dlq_topic), 1)
 
+    def test_live_consumer_manual_commit_and_crash_recovery_mechanics(self):
+        """Verify that live Kafka consumer enforces manual offset commits (enable_auto_commit=False) and crash recovery."""
+        class MockKafkaRecord:
+            def __init__(self, value, offset):
+                self.value = value
+                self.offset = offset
+
+        class MockKafkaConsumer:
+            def __init__(self, messages):
+                self.messages = list(messages)
+                self.committed_offsets = []
+
+            def poll(self, timeout_ms=1000, max_records=1):
+                if not self.messages:
+                    return {}
+                msg = self.messages.pop(0)
+                return {'topic': [msg]}
+
+            def commit(self):
+                self.committed_offsets.append(True)
+
+        event_payload = {
+            'event_id': 'EVT-LIVE-CRASH-001',
+            'timestamp_utc': datetime.now().isoformat(),
+            'transaction': self.fraud_tx,
+        }
+
+        # 1. Normal execution: consumer processes and manually commits offset
+        consumer = FraudStreamingConsumer(
+            input_topic=self.tx_topic,
+            alerts_topic=self.alert_topic,
+            use_simulated=True,
+            models_dir=config.MODELS_DIR,
+            store=self.store,
+        )
+        mock_c = MockKafkaConsumer([MockKafkaRecord(event_payload, offset=0)])
+        consumer._live_consumer = mock_c
+        consumer.use_simulated = False
+
+        res = consumer.consume_one(timeout=0.5)
+        self.assertIsNotNone(res)
+        self.assertEqual(len(mock_c.committed_offsets), 1)  # Verified manual commit executed!
+        case_id = res['case_id']
+
+        # 2. Crash scenario: consumer dies after DB write before commit
+        crash_event_payload = {
+            'event_id': 'EVT-LIVE-CRASH-002',
+            'timestamp_utc': datetime.now().isoformat(),
+            'transaction': self.fraud_tx,
+        }
+        crash_consumer = FraudStreamingConsumer(
+            input_topic=self.tx_topic,
+            alerts_topic=self.alert_topic,
+            use_simulated=True,
+            models_dir=config.MODELS_DIR,
+            store=self.store,
+            simulate_crash_before_commit=True,
+        )
+        mock_crash_c = MockKafkaConsumer([MockKafkaRecord(crash_event_payload, offset=1)])
+        crash_consumer._live_consumer = mock_crash_c
+        crash_consumer.use_simulated = False
+
+        with self.assertRaises(RuntimeError):
+            crash_consumer.consume_one(timeout=0.5)
+        # Verified: commit was NOT executed due to crash!
+        self.assertEqual(len(mock_crash_c.committed_offsets), 0)
+
+        # 3. Restarted consumer re-reads uncommitted offset and handles idempotently
+        recovered_consumer = FraudStreamingConsumer(
+            input_topic=self.tx_topic,
+            alerts_topic=self.alert_topic,
+            use_simulated=True,
+            models_dir=config.MODELS_DIR,
+            store=self.store,
+            simulate_crash_before_commit=False,
+        )
+        mock_recovered_c = MockKafkaConsumer([MockKafkaRecord(crash_event_payload, offset=1)])
+        recovered_consumer._live_consumer = mock_recovered_c
+        recovered_consumer.use_simulated = False
+
+        recovery_res = recovered_consumer.consume_one(timeout=0.5)
+        self.assertIsNotNone(recovery_res)
+        self.assertTrue(recovery_res['is_duplicate'])
+        # Verified: commit succeeded on replay!
+        self.assertEqual(len(mock_recovered_c.committed_offsets), 1)
+
 
 if __name__ == '__main__':
     unittest.main()

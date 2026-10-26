@@ -330,7 +330,7 @@ class FraudStreamingConsumer:
                 bootstrap_servers=self.bootstrap_servers.split(','),
                 group_id=self.group_id,
                 auto_offset_reset='earliest',
-                enable_auto_commit=True,
+                enable_auto_commit=False,  # Manual commit ensures at-least-once processing & crash safety
                 value_deserializer=lambda v: json.loads(v.decode('utf-8')),
                 consumer_timeout_ms=1000,
             )
@@ -535,12 +535,18 @@ class FraudStreamingConsumer:
         return processed_record
 
     def consume_one(self, timeout: float = 0.5) -> dict | None:
-        """Poll and process a single message from the input stream."""
+        """Poll and process a single message from the input stream with manual offset commit."""
         if not self.use_simulated and self._live_consumer is not None:
             raw_batch = self._live_consumer.poll(timeout_ms=int(timeout * 1000), max_records=1)
             for _, messages in raw_batch.items():
                 for msg in messages:
-                    return self.process_message(msg.value)
+                    res = self.process_message(msg.value)
+                    # Manually commit offset ONLY after successful processing and database save
+                    try:
+                        self._live_consumer.commit()
+                    except Exception as commit_exc:
+                        logger.error('Failed to commit Kafka offset: %s', commit_exc)
+                    return res
             return None
         else:
             msg = self._broker.consume(self.input_topic, timeout=timeout)
@@ -550,13 +556,13 @@ class FraudStreamingConsumer:
             return None
 
     def consume_batch(self, max_records: int = 50, timeout_per_message: float = 0.2) -> list[dict]:
-        """Poll and process up to max_records messages."""
+        """Poll and process up to max_records messages with manual offset commit."""
         results = []
         for _ in range(max_records):
-            scored = self.consume_one(timeout=timeout_per_message)
-            if scored is None:
+            res = self.consume_one(timeout=timeout_per_message)
+            if res is None:
                 break
-            results.append(scored)
+            results.append(res)
         return results
 
     def get_metrics(self) -> dict:

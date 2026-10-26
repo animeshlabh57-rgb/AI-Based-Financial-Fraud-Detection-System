@@ -15,6 +15,7 @@ class TestFraudDetectionAPI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Initialize the FastAPI test client once with authenticated headers."""
+        config.VALID_API_KEYS.add(config.TEST_API_KEY)
         cls.client = TestClient(
             app,
             headers={
@@ -23,6 +24,10 @@ class TestFraudDetectionAPI(unittest.TestCase):
             },
         )
         cls.unauth_client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls):
+        config.VALID_API_KEYS.discard(config.TEST_API_KEY)
 
     def setUp(self):
         from src.api import get_store
@@ -179,7 +184,7 @@ class TestFraudDetectionAPI(unittest.TestCase):
         self.assertIn("model_breakdown", first_item)
 
     def test_stream_publish_endpoint(self):
-        """Test POST /stream/publish simulates publishing transaction to Kafka stream."""
+        """Test POST /stream/publish publishes to broker and genuinely consumes from queue without bypass."""
         payload = {
             "type": "TRANSFER",
             "amount": 25000.0,
@@ -194,10 +199,12 @@ class TestFraudDetectionAPI(unittest.TestCase):
         response = self.client.post("/stream/publish?mode=simulation", json=payload)
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data.get("status"), "stream_processed")
+        self.assertEqual(data.get("status"), "stream_consumed_and_scored")
         self.assertEqual(data.get("streaming_engine"), "simulated_broker")
+        self.assertTrue(data.get("verified_consumption"))
         self.assertIn("producer_receipt", data)
         self.assertIn("streaming_alert", data)
+        self.assertEqual(data["event_id"], data["producer_receipt"]["event_id"])
 
     def test_stream_publish_live_fails_without_broker(self):
         """Test POST /stream/publish with mode=live fails clearly when broker is absent."""
@@ -253,6 +260,39 @@ class TestFraudDetectionAPI(unittest.TestCase):
         data = resp.json()
         self.assertIn("total_alerts", data)
         self.assertIn("alerts", data)
+
+    def test_stream_alerts_live_mode_rejected_when_broker_unreachable(self):
+        """Test GET /stream/alerts?mode=live raises 503 when live broker is down instead of returning empty 200."""
+        resp = self.client.get("/stream/alerts?mode=live")
+        self.assertEqual(resp.status_code, 503)
+        self.assertIn("Live Kafka alert retrieval failed", resp.json()["detail"])
+
+    def test_stream_alerts_invalid_mode_rejected(self):
+        """Test GET /stream/alerts?mode=invalid raises 400 Bad Request."""
+        resp = self.client.get("/stream/alerts?mode=invalid_mode")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("Invalid streaming mode", resp.json()["detail"])
+
+    def test_unauthenticated_request_rejected_without_valid_secret(self):
+        """Test that requests with missing or invalid API keys are rejected with 401."""
+        payload = {
+            "type": "PAYMENT",
+            "amount": 10.0,
+            "oldbalanceOrg": 100.0,
+            "newbalanceOrig": 90.0,
+            "oldbalanceDest": 0.0,
+            "newbalanceDest": 10.0,
+            "step": 1
+        }
+        # Missing key
+        resp_missing = self.unauth_client.post("/predict", json=payload)
+        self.assertEqual(resp_missing.status_code, 401)
+        self.assertIn("Unauthorized", resp_missing.json()["detail"])
+
+        # Invalid key
+        resp_invalid = self.client.post("/predict", json=payload, headers={"X-API-Key": "wrong-secret-key-12345"})
+        self.assertEqual(resp_invalid.status_code, 401)
+        self.assertIn("Unauthorized", resp_invalid.json()["detail"])
 
 
 if __name__ == "__main__":

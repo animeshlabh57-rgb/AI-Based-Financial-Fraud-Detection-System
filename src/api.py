@@ -484,16 +484,16 @@ def publish_streaming_event(
     authenticate_request(x_api_key=x_api_key, x_analyst_id=x_analyst_id)
 
     raw_event = event.model_dump()
+    store = get_store()
 
     if mode == "live":
         try:
             producer = TransactionStreamProducer(use_simulated=False, allow_fallback=False)
-            consumer = FraudStreamingConsumer(use_simulated=False, allow_fallback=False)
+            consumer = FraudStreamingConsumer(use_simulated=False, allow_fallback=False, store=store)
             publish_receipt = producer.produce(raw_event)
-            # Actually poll and consume from the live Kafka topic
+            expected_event_id = publish_receipt.get("event_id")
+            # Poll and consume genuinely from the live Kafka topic queue
             processed_alert = consumer.consume_one(timeout=3.0)
-            if processed_alert is None:
-                processed_alert = consumer.process_message(publish_receipt)
             streaming_engine = "live_kafka"
         except ConnectionError as exc:
             raise HTTPException(
@@ -503,17 +503,32 @@ def publish_streaming_event(
     else:
         # Simulated or auto mode with thread-safe broker queue
         producer = TransactionStreamProducer(use_simulated=True, simulated_broker=_simulated_broker)
-        consumer = FraudStreamingConsumer(use_simulated=True, simulated_broker=_simulated_broker)
+        consumer = FraudStreamingConsumer(use_simulated=True, simulated_broker=_simulated_broker, store=store)
         publish_receipt = producer.produce(raw_event)
-        # Actually poll and consume from the simulated broker topic queue
+        expected_event_id = publish_receipt.get("event_id")
+        # Poll and consume genuinely from the simulated broker topic queue
         processed_alert = consumer.consume_one(timeout=2.0)
-        if processed_alert is None:
-            processed_alert = consumer.process_message(publish_receipt)
         streaming_engine = "simulated_broker"
 
+    if processed_alert is None:
+        # Honest reporting: event was published, but worker consumption timed out (no synthetic bypass)
+        return {
+            "status": "published_pending_consumption",
+            "message": f"Event {expected_event_id} was successfully published to Kafka topic '{config.KAFKA_TRANSACTIONS_TOPIC}', but consumer polling timed out. Event remains queued for asynchronous processing.",
+            "streaming_engine": streaming_engine,
+            "event_id": expected_event_id,
+            "verified_consumption": False,
+            "producer_receipt": publish_receipt,
+            "streaming_alert": None,
+        }
+
+    consumed_id = processed_alert.get("event_id")
     return {
-        "status": "stream_processed",
+        "status": "stream_consumed_and_scored",
         "streaming_engine": streaming_engine,
+        "event_id": expected_event_id,
+        "consumed_event_id": consumed_id,
+        "verified_consumption": (consumed_id == expected_event_id),
         "producer_receipt": publish_receipt,
         "streaming_alert": processed_alert,
     }
@@ -529,15 +544,44 @@ def get_streaming_alerts(
     """Retrieve recent fraud alerts published to the alerts streaming topic."""
     authenticate_request(x_api_key=x_api_key, x_analyst_id=x_analyst_id)
     alerts = []
-    if mode == "simulation":
+    if mode == "live":
+        try:
+            from kafka import KafkaConsumer
+            live_consumer = KafkaConsumer(
+                config.KAFKA_ALERTS_TOPIC,
+                bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS.split(','),
+                group_id=f"alert-reader-{uuid.uuid4().hex[:8]}",
+                auto_offset_reset='earliest',
+                enable_auto_commit=False,
+                consumer_timeout_ms=1500,
+                value_deserializer=lambda v: json.loads(v.decode('utf-8')),
+            )
+            raw_batch = live_consumer.poll(timeout_ms=1500, max_records=limit)
+            for _, messages in raw_batch.items():
+                for msg in messages:
+                    alerts.append(msg.value)
+            live_consumer.close()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Live Kafka alert retrieval failed: {exc}. Ensure broker is running at {config.KAFKA_BOOTSTRAP_SERVERS} or use mode=simulation.",
+            )
+    elif mode == "simulation":
         history = _simulated_broker.get_history(config.KAFKA_ALERTS_TOPIC, limit=limit)
         for msg in history:
             try:
                 alerts.append(msg.deserialize())
             except Exception:
                 pass
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid streaming mode '{mode}'. Supported modes are 'simulation' and 'live'.",
+        )
+
     return {
         "status": "success",
+        "streaming_engine": "live_kafka" if mode == "live" else "simulated_broker",
         "total_alerts": len(alerts),
         "alerts": alerts,
     }

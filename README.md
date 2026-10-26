@@ -75,12 +75,13 @@ TensorFlow, PyTorch, a GPU, and sequence data are not required.
 
 ## Verified results
 
-All **92 automated checks passed**, with zero failures and zero skipped tests. These include sign-in,
+All **96 automated checks passed**, with zero failures and zero skipped tests. These include sign-in,
 all seven dashboard pages, per-account data isolation, saved dataset/history
 reopening after a fresh sign-in, scoring with all four models, saved-model
 reloads, input validation, preserved duplicate inference rows, training-only preprocessing,
 four-model score/threshold comparisons, disagreement cases, transaction explanations,
-real-time Kafka streaming queue consumption and DLQ routing, consumer crash recovery/idempotency,
+real-time Kafka streaming queue consumption and DLQ routing, consumer manual offset commits and crash recovery/idempotency,
+live alerts consumption with broker availability checks,
 persistent multi-process SQLite rate limiting bound to authenticated identities, and exact saved comparison CSV round trips.
 The full report is `results/test_report.txt` and summary in `results/test_summary.json`.
 
