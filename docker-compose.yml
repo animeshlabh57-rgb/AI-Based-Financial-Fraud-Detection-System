@@ -20,7 +20,7 @@ services:
       start_period: 10s
     environment:
       - PRODUCTION=1
-      - FRAUDGUARD_API_KEY=${FRAUDGUARD_API_KEY:-fg_deployment_secret_required}
+      - FRAUDGUARD_API_KEY=${FRAUDGUARD_API_KEY:?Set FRAUDGUARD_API_KEY}
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - KAFKA_TRANSACTIONS_TOPIC=financial.transactions
       - KAFKA_ALERTS_TOPIC=financial.fraud-alerts

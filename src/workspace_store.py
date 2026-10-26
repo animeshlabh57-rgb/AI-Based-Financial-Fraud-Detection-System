@@ -162,6 +162,19 @@ class WorkspaceStore:
                     timestamp REAL NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS idx_rate_limits_key_ts ON api_rate_limits(client_key, timestamp);
+
+                CREATE TABLE IF NOT EXISTS pending_alerts (
+                    alert_id TEXT PRIMARY KEY,
+                    event_id TEXT UNIQUE NOT NULL,
+                    topic TEXT NOT NULL,
+                    message_key TEXT,
+                    payload_json TEXT NOT NULL,
+                    status TEXT NOT NULL CHECK(status IN ('PENDING', 'DELIVERED')),
+                    created_at TEXT NOT NULL,
+                    delivered_at TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_pending_alerts_event ON pending_alerts(event_id);
+                CREATE INDEX IF NOT EXISTS idx_pending_alerts_status ON pending_alerts(status);
             ''')
             # Additive migration: old account/dataset/result rows stay intact.
             columns = {row['name'] for row in self._connection.execute('PRAGMA table_info(runs)')}
@@ -659,6 +672,58 @@ class WorkspaceStore:
             rows = self._connection.execute(
                 'SELECT * FROM case_audit_log WHERE case_id = ? ORDER BY id ASC',
                 (str(case_id).strip(),)
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def record_pending_alert(self, alert_id: str, event_id: str, topic: str, message_key: str | None, payload: dict) -> dict:
+        """Persist a pending alert alongside the case before publishing to Kafka."""
+        now = self._now()
+        payload_str = json.dumps(payload)
+        with self._lock, self._connection:
+            self._connection.execute(
+                '''INSERT INTO pending_alerts
+                   (alert_id, event_id, topic, message_key, payload_json, status, created_at)
+                   VALUES (?, ?, ?, ?, ?, 'PENDING', ?)
+                   ON CONFLICT(event_id) DO UPDATE SET
+                       alert_id = excluded.alert_id,
+                       topic = excluded.topic,
+                       message_key = excluded.message_key,
+                       payload_json = excluded.payload_json,
+                       created_at = excluded.created_at''',
+                (str(alert_id).strip(), str(event_id).strip(), str(topic).strip(),
+                 str(message_key).strip() if message_key is not None else None, payload_str, now),
+            )
+            row = self._connection.execute(
+                'SELECT * FROM pending_alerts WHERE event_id = ?', (str(event_id).strip(),)
+            ).fetchone()
+            return dict(row)
+
+    def mark_alert_delivered(self, alert_id: str) -> bool:
+        """Mark a pending alert as delivered after broker acknowledgement."""
+        now = self._now()
+        with self._lock, self._connection:
+            cur = self._connection.execute(
+                '''UPDATE pending_alerts
+                   SET status = 'DELIVERED', delivered_at = ?
+                   WHERE alert_id = ?''',
+                (now, str(alert_id).strip()),
+            )
+            return cur.rowcount > 0
+
+    def get_pending_alert_by_event(self, event_id: str) -> dict | None:
+        """Fetch alert record by unique Kafka event_id."""
+        with self._lock:
+            row = self._connection.execute(
+                'SELECT * FROM pending_alerts WHERE event_id = ?', (str(event_id).strip(),)
+            ).fetchone()
+            return dict(row) if row is not None else None
+
+    def list_pending_alerts(self, limit: int = 100) -> list[dict]:
+        """Fetch undelivered alerts awaiting broker dispatch."""
+        with self._lock:
+            rows = self._connection.execute(
+                "SELECT * FROM pending_alerts WHERE status = 'PENDING' ORDER BY created_at ASC LIMIT ?",
+                (limit,)
             ).fetchall()
             return [dict(r) for r in rows]
 

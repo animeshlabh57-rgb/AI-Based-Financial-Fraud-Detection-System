@@ -5,6 +5,7 @@ consensus risk tiering, TreeSHAP/LIME explainability, and Kafka streaming integr
 """
 
 import hashlib
+import json
 import os
 import sys
 import time

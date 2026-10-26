@@ -139,8 +139,15 @@ class TestReliabilityAndInvestigation(unittest.TestCase):
         audit_records_before = self.store.get_case_audit_log(case_id)
         self.assertEqual(len(audit_records_before), 1)
 
+        # Check that pending alert was persisted alongside the case before crash
+        pending_alert_before = self.store.get_pending_alert_by_event(event_id)
+        self.assertIsNotNone(pending_alert_before)
+        self.assertEqual(pending_alert_before["status"], "PENDING")
+        self.assertEqual(self.broker.topic_size(config.KAFKA_ALERTS_TOPIC), 0, "No alert should have been sent before crash!")
+
         # 3. Consumer restarts (simulated recovery) and re-processes uncommitted event
         recovering_consumer = FraudStreamingConsumer(
+            alerts_topic=config.KAFKA_ALERTS_TOPIC,
             use_simulated=True,
             simulated_broker=self.broker,
             store=self.store,
@@ -149,10 +156,21 @@ class TestReliabilityAndInvestigation(unittest.TestCase):
 
         replay_result = recovering_consumer.process_message(receipt)
 
-        # 4. Verify idempotent behavior upon replay
+        # 4. Verify recovery delivers the pending alert and maintains idempotency
         self.assertTrue(replay_result["is_duplicate"])
-        self.assertEqual(replay_result["idempotent_action"], "SKIPPED_EXISTING_CASE")
+        self.assertEqual(replay_result["idempotent_action"], "DELIVERED_PENDING_ALERT_ON_REPLAY")
+        self.assertTrue(replay_result["alert_delivered_on_recovery"])
         self.assertEqual(replay_result["case_id"], case_id)
+
+        # Confirm the pending alert is now marked DELIVERED and alert sits in topic
+        pending_alert_after = self.store.get_pending_alert_by_event(event_id)
+        self.assertEqual(pending_alert_after["status"], "DELIVERED")
+        self.assertEqual(self.broker.topic_size(config.KAFKA_ALERTS_TOPIC), 1, "Recovery must deliver the alert!")
+
+        # Replaying again after delivery skips completely without duplicate alert
+        replayed_again = recovering_consumer.process_message(receipt)
+        self.assertEqual(replayed_again["idempotent_action"], "SKIPPED_EXISTING_CASE")
+        self.assertEqual(self.broker.topic_size(config.KAFKA_ALERTS_TOPIC), 1, "Must not publish duplicate alert on second replay!")
 
         # Confirm ZERO duplicate records in database
         all_cases = self.store.list_cases(limit=100)

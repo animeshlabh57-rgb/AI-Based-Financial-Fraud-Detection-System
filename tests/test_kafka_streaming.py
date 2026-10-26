@@ -304,9 +304,20 @@ class TestKafkaStreaming(unittest.TestCase):
             store=self.store,
             simulate_crash_before_commit=False,
         )
+        # Verify no alert was published prior to crash
+        self.assertEqual(self.broker.topic_size(self.alert_topic), 0)
+
         recovery_result = recovered_consumer.process_message(test_event)
         self.assertTrue(recovery_result['is_duplicate'])
-        self.assertEqual(recovery_result['idempotent_action'], 'SKIPPED_EXISTING_CASE')
+        self.assertTrue(recovery_result['alert_delivered_on_recovery'])
+        self.assertEqual(recovery_result['idempotent_action'], 'DELIVERED_PENDING_ALERT_ON_REPLAY')
+        # Verify recovery delivered the alert to the alert topic
+        self.assertEqual(self.broker.topic_size(self.alert_topic), 1)
+
+        # Replaying again after successful delivery avoids duplicate alert
+        second_recovery = recovered_consumer.process_message(test_event)
+        self.assertEqual(second_recovery['idempotent_action'], 'SKIPPED_EXISTING_CASE')
+        self.assertEqual(self.broker.topic_size(self.alert_topic), 1)
 
     def test_dead_letter_queue_and_malformed_event_handling(self):
         """Verify malformed messages are safely routed to DLQ without halting stream consumption."""
@@ -421,6 +432,8 @@ class TestKafkaStreaming(unittest.TestCase):
         recovery_res = recovered_consumer.consume_one(timeout=0.5)
         self.assertIsNotNone(recovery_res)
         self.assertTrue(recovery_res['is_duplicate'])
+        self.assertTrue(recovery_res['alert_delivered_on_recovery'])
+        self.assertEqual(recovery_res['idempotent_action'], 'DELIVERED_PENDING_ALERT_ON_REPLAY')
         # Verified: commit succeeded on replay!
         self.assertEqual(len(mock_recovered_c.committed_offsets), 1)
 

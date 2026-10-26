@@ -380,11 +380,40 @@ class FraudStreamingConsumer:
         }
         dlq_bytes = json.dumps(dlq_event).encode('utf-8')
         if not self.use_simulated and self._live_alert_producer is not None:
-            self._live_alert_producer.send(self.dlq_topic, value=dlq_event)
+            future = self._live_alert_producer.send(self.dlq_topic, value=dlq_event)
+            try:
+                future.get(timeout=10.0)
+                self._live_alert_producer.flush()
+            except Exception as exc:
+                logger.error('Failed to synchronously acknowledge DLQ dispatch: %s', exc)
+                raise
         else:
             self._broker.publish(self.dlq_topic, key=None, value=dlq_bytes, headers={'dlq_reason': reason})
         logger.warning('Message routed to DLQ topic %s: %s', self.dlq_topic, reason)
         return dlq_event
+
+    def _publish_alert_synchronous(self, alert_event: dict):
+        """Publish alert to the alert topic and synchronously await broker acknowledgment."""
+        key = str(alert_event.get('transaction_id', ''))
+        if not self.use_simulated and self._live_alert_producer is not None:
+            key_bytes = key.encode('utf-8') if key else None
+            future = self._live_alert_producer.send(
+                self.alerts_topic,
+                key=key_bytes,
+                value=alert_event,
+            )
+            # Synchronously wait for broker acknowledgment to guarantee delivery before committing input offset
+            future.get(timeout=10.0)
+            self._live_alert_producer.flush()
+        else:
+            alert_id = str(alert_event.get('alert_id', ''))
+            alert_bytes = json.dumps(alert_event).encode('utf-8')
+            self._broker.publish(
+                self.alerts_topic,
+                key=key,
+                value=alert_bytes,
+                headers={'alert_id': alert_id},
+            )
 
     def process_message(self, message_dict: dict) -> dict:
         """Score a single incoming transaction event with idempotency, forensics, and alert dispatch."""
@@ -393,25 +422,57 @@ class FraudStreamingConsumer:
         event_id = message_dict.get('event_id', f'EVT-{uuid.uuid4().hex[:8].upper()}')
         timestamp_utc = message_dict.get('timestamp_utc', datetime.now(timezone.utc).isoformat())
 
-        # 1. Idempotency Check: prevent duplicate database effects upon Kafka offset replay
+        # 1. Idempotency & Crash Recovery: prevent duplicate DB effects and ensure undelivered alerts are published
         if self.store is not None:
             existing_case = self.store.get_case_by_event(event_id)
+            pending_alert_row = self.store.get_pending_alert_by_event(event_id)
             if existing_case is not None:
-                self.duplicate_skips += 1
-                logger.info('Duplicate Kafka event %s detected; skipping re-execution.', event_id)
-                return {
-                    'event_id': event_id,
-                    'case_id': existing_case['case_id'],
-                    'transaction_id': existing_case['transaction_id'],
-                    'amount': existing_case['amount'],
-                    'type': existing_case['txn_type'],
-                    'decision': existing_case['decision'],
-                    'is_flagged': existing_case['status'] != 'RESOLVED',
-                    'is_duplicate': True,
-                    'idempotent_action': 'SKIPPED_EXISTING_CASE',
-                    'latency_ms': 0.0,
-                    'forensic_factors': json.loads(existing_case.get('explanation_json', '{}')).get('forensic_factors', []),
-                }
+                # If a previous worker crashed after DB save but BEFORE alert publication,
+                # replay finds the pending alert and completes delivery now!
+                if pending_alert_row is not None and pending_alert_row.get('status') == 'PENDING':
+                    logger.warning('Replaying event %s with undelivered alert %s: completing delivery on recovery.',
+                                   event_id, pending_alert_row['alert_id'])
+                    alert_event = json.loads(pending_alert_row['payload_json'])
+                    self._publish_alert_synchronous(alert_event)
+                    self.store.mark_alert_delivered(pending_alert_row['alert_id'])
+                    self.alerts_published += 1
+                    with self._history_lock:
+                        self.alert_history.append(alert_event)
+                        if len(self.alert_history) > 200:
+                            self.alert_history.pop(0)
+
+                    return {
+                        'event_id': event_id,
+                        'case_id': existing_case['case_id'],
+                        'transaction_id': existing_case['transaction_id'],
+                        'amount': existing_case['amount'],
+                        'type': existing_case['txn_type'],
+                        'decision': existing_case['decision'],
+                        'is_flagged': True,
+                        'is_duplicate': True,
+                        'alert_delivered_on_recovery': True,
+                        'idempotent_action': 'DELIVERED_PENDING_ALERT_ON_REPLAY',
+                        'alert_id': pending_alert_row['alert_id'],
+                        'latency_ms': 0.0,
+                        'forensic_factors': json.loads(existing_case.get('explanation_json', '{}')).get('forensic_factors', []),
+                    }
+                else:
+                    self.duplicate_skips += 1
+                    logger.info('Duplicate Kafka event %s detected; skipping re-execution.', event_id)
+                    return {
+                        'event_id': event_id,
+                        'case_id': existing_case['case_id'],
+                        'transaction_id': existing_case['transaction_id'],
+                        'amount': existing_case['amount'],
+                        'type': existing_case['txn_type'],
+                        'decision': existing_case['decision'],
+                        'is_flagged': existing_case['status'] != 'RESOLVED',
+                        'is_duplicate': True,
+                        'alert_delivered_on_recovery': False,
+                        'idempotent_action': 'SKIPPED_EXISTING_CASE',
+                        'latency_ms': 0.0,
+                        'forensic_factors': json.loads(existing_case.get('explanation_json', '{}')).get('forensic_factors', []),
+                    }
 
         # 2. Schema validation with bounded retry / DLQ fallback
         try:
@@ -482,6 +543,15 @@ class FraudStreamingConsumer:
 
         # 3. Database persistence & Fraud Investigation Queue Case creation
         case_id = None
+        alert_id = None
+        alert_event = None
+        if is_flagged:
+            alert_id = f'ALT-{uuid.uuid4().hex[:10].upper()}'
+            alert_event = {
+                'alert_id': alert_id,
+                **processed_record,
+            }
+
         if self.store is not None:
             threshold_val = getattr(self.model_engine, 'threshold', 0.5)
             risk_val = float(model_details[0]['Score']) if model_details else 0.0
@@ -505,25 +575,27 @@ class FraudStreamingConsumer:
             processed_record['case_id'] = case_id
             processed_record['was_created'] = was_created
 
-            # 4. Crash simulation hook: test crash after DB write but BEFORE Kafka commit
-            if self.simulate_crash_before_commit:
-                logger.warning('Simulating worker process crash after database save before offset commit!')
-                raise RuntimeError(f"SimulatedConsumerCrash: Process died before committing offset for event {event_id} (Case {case_id} saved).")
+            # Persist pending alert in SQLite BEFORE attempting broker dispatch
+            if is_flagged and alert_event is not None:
+                self.store.record_pending_alert(
+                    alert_id=alert_id,
+                    event_id=event_id,
+                    topic=self.alerts_topic,
+                    message_key=alert_event['transaction_id'],
+                    payload=alert_event,
+                )
 
-        if is_flagged:
+            # 4. Crash simulation hook: test crash after DB write but BEFORE alert dispatch & offset commit
+            if self.simulate_crash_before_commit:
+                logger.warning('Simulating worker process crash after database save before alert dispatch!')
+                raise RuntimeError(f"SimulatedConsumerCrash: Process died before alert delivery for event {event_id} (Case {case_id} saved).")
+
+        if is_flagged and alert_event is not None:
             self.alerts_published += 1
-            alert_id = f'ALT-{uuid.uuid4().hex[:10].upper()}'
-            alert_event = {
-                'alert_id': alert_id,
-                **processed_record,
-            }
-            # Publish alert to alerts topic
-            if not self.use_simulated and self._live_alert_producer is not None:
-                self._live_alert_producer.send(self.alerts_topic, key=alert_event['transaction_id'], value=alert_event)
-            else:
-                alert_bytes = json.dumps(alert_event).encode('utf-8')
-                self._broker.publish(self.alerts_topic, key=alert_event['transaction_id'],
-                                     value=alert_bytes, headers={'alert_id': alert_id})
+            # Synchronously publish alert to Kafka topic and await broker acknowledgment
+            self._publish_alert_synchronous(alert_event)
+            if self.store is not None:
+                self.store.mark_alert_delivered(alert_id)
 
             with self._history_lock:
                 self.alert_history.append(alert_event)

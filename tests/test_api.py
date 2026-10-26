@@ -3,6 +3,7 @@ Tests cover health check, authentication security, consensus scoring across 4 mo
 batch prediction, request limits, Kafka streaming modes, and model metadata inspection.
 """
 
+import json
 import unittest
 from fastapi.testclient import TestClient
 import config
@@ -272,6 +273,45 @@ class TestFraudDetectionAPI(unittest.TestCase):
         resp = self.client.get("/stream/alerts?mode=invalid_mode")
         self.assertEqual(resp.status_code, 400)
         self.assertIn("Invalid streaming mode", resp.json()["detail"])
+
+    def test_stream_alerts_live_decoding_with_actual_payload(self):
+        """Test that live alert deserialization decodes actual bytes using json without NameError."""
+        from unittest.mock import MagicMock, patch
+
+        mock_record = MagicMock()
+        alert_payload = {
+            "alert_id": "ALT-TEST-LIVE-001",
+            "event_id": "EVT-TEST-LIVE-001",
+            "decision": "FRAUDULENT",
+            "amount": 500000.0,
+            "type": "TRANSFER",
+            "is_flagged": True,
+        }
+        encoded_bytes = json.dumps(alert_payload).encode("utf-8")
+        
+        # Test the deserializer directly to guarantee json is in scope
+        from src.api import get_streaming_alerts
+        mock_consumer = MagicMock()
+        mock_consumer.poll.return_value = {
+            "financial.fraud-alerts-0": [
+                MagicMock(value=alert_payload)
+            ]
+        }
+        
+        with patch("kafka.KafkaConsumer", return_value=mock_consumer) as mock_cls:
+            resp = self.client.get("/stream/alerts?mode=live")
+            self.assertEqual(resp.status_code, 200)
+            data = resp.json()
+            self.assertEqual(data["status"], "success")
+            self.assertEqual(data["streaming_engine"], "live_kafka")
+            self.assertEqual(len(data["alerts"]), 1)
+            self.assertEqual(data["alerts"][0]["alert_id"], "ALT-TEST-LIVE-001")
+            
+            # Verify value_deserializer lambda function works without NameError
+            deserializer = mock_cls.call_args[1]["value_deserializer"]
+            decoded = deserializer(encoded_bytes)
+            self.assertEqual(decoded["alert_id"], "ALT-TEST-LIVE-001")
+            self.assertEqual(decoded["decision"], "FRAUDULENT")
 
     def test_unauthenticated_request_rejected_without_valid_secret(self):
         """Test that requests with missing or invalid API keys are rejected with 401."""
