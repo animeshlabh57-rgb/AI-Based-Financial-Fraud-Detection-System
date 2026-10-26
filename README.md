@@ -75,7 +75,7 @@ TensorFlow, PyTorch, a GPU, and sequence data are not required.
 
 ## Verified results
 
-All **96 automated checks passed**, with zero failures and zero skipped tests. These include sign-in,
+All **104 automated checks passed**, with zero failures and zero skipped tests. These include sign-in,
 all seven dashboard pages, per-account data isolation, saved dataset/history
 reopening after a fresh sign-in, scoring with all four models, saved-model
 reloads, input validation, preserved duplicate inference rows, training-only preprocessing,
@@ -285,3 +285,37 @@ The FastAPI microservice (`src/api.py`) exposes production-grade REST endpoints 
 
 The original source and artifacts were preserved in
 `project_backup_before_ml_dl.zip` before implementation changes.
+
+
+## Deployment secrets and streaming recovery
+
+Docker Compose requires `FRAUDGUARD_API_KEY` and refuses to start without it.
+Generate a private value with `python -c "import secrets; print(secrets.token_urlsafe(32))"`,
+set it in your shell, and send it in the `X-API-Key` header. Never commit the value.
+For example, in PowerShell set `$env:FRAUDGUARD_API_KEY = "YOUR_PRIVATE_VALUE"`
+before running `docker compose up --build`.
+
+Kafka uses `kafka:29092` inside Docker and `localhost:9092` from the host.
+The API waits for publication acknowledgement before reporting an event as
+published. A timeout or a different consumed event produces
+`published_pending_consumption`, not a claim that the requested event was scored.
+Keep a consumer running to drain pending input; the synchronous endpoint only
+polls briefly and does not guarantee immediate processing.
+
+Flagged cases and their pending alerts are saved in one SQLite transaction.
+On replay, the consumer retries any pending alert before committing the input
+offset. Alert and dead-letter publication wait for broker acknowledgement;
+processing or commit failures rewind the consumer position for retry.
+Alerts carry stable IDs derived from the input event ID. Delivery is **at least
+once**, not exactly once: a crash after broker acknowledgement but before the
+SQLite delivery marker can cause redelivery. Alert consumers must deduplicate
+by `alert_id` or `event_id`. Existing cases created before this change are not
+retroactively assigned new alerts.
+
+`tests/test_delivery_reliability.py` covers transactional rollback, restart
+recovery, failed acknowledgements, commit failures, event correlation, live
+alert JSON decoding, and the required Compose secret. Kafka clients are doubled
+in these automated tests. They are not proof of a real Kafka deployment:
+Docker and a live broker were unavailable in the review environment. Run a
+broker-backed publish, consume, restart and replay exercise before deployment.
+The changes do not alter the models or establish real-world fraud accuracy.

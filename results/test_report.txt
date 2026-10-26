@@ -1,4 +1,4 @@
-C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+/root/.local/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
   from starlette.testclient import TestClient as TestClient  # noqa
 test_batch_prediction_endpoint (test_api.TestFraudDetectionAPI.test_batch_prediction_endpoint)
 Test POST /predict/batch scores an array of transactions with consensus. ... ok
@@ -32,42 +32,52 @@ test_unauthenticated_request_rejected (test_api.TestFraudDetectionAPI.test_unaut
 Test POST /predict without API key is rejected with HTTP 401. ... ok
 test_unauthenticated_request_rejected_without_valid_secret (test_api.TestFraudDetectionAPI.test_unauthenticated_request_rejected_without_valid_secret)
 Test that requests with missing or invalid API keys are rejected with 401. ... ok
-test_account_can_reopen_all_pages_after_sign_out (test_dashboard.TestDashboard.test_account_can_reopen_all_pages_after_sign_out) ... 2026-10-27 03:56:57.963 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-27 03:57:00.301 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_account_can_reopen_all_pages_after_sign_out (test_dashboard.TestDashboard.test_account_can_reopen_all_pages_after_sign_out) ... 2026-10-26 22:29:24.517 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-26 22:29:25.163 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_all_models_can_score_a_transaction (test_dashboard.TestDashboard.test_all_models_can_score_a_transaction) ... 2026-10-27 03:57:01.029 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-27 03:57:02.633 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_all_models_can_score_a_transaction (test_dashboard.TestDashboard.test_all_models_can_score_a_transaction) ... 2026-10-26 22:29:25.436 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-26 22:29:26.116 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_default_single_comparison_evaluates_and_saves_all_models (test_dashboard.TestDashboard.test_default_single_comparison_evaluates_and_saves_all_models) ... 2026-10-27 03:57:03.504 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-27 03:57:04.682 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_default_single_comparison_evaluates_and_saves_all_models (test_dashboard.TestDashboard.test_default_single_comparison_evaluates_and_saves_all_models) ... 2026-10-26 22:29:26.446 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-26 22:29:26.858 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_demo_batch_scan_survives_a_new_sign_in (test_dashboard.TestDashboard.test_demo_batch_scan_survives_a_new_sign_in) ... 2026-10-27 03:57:05.763 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-27 03:57:08.376 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_demo_batch_scan_survives_a_new_sign_in (test_dashboard.TestDashboard.test_demo_batch_scan_survives_a_new_sign_in) ... 2026-10-26 22:29:27.253 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-26 22:29:28.442 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_incorrect_password_does_not_open_workspace (test_dashboard.TestDashboard.test_incorrect_password_does_not_open_workspace) ... 2026-10-27 03:57:09.228 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_incorrect_password_does_not_open_workspace (test_dashboard.TestDashboard.test_incorrect_password_does_not_open_workspace) ... 2026-10-26 22:29:28.799 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_logged_out_data_is_protected (test_dashboard.TestDashboard.test_logged_out_data_is_protected) ... 2026-10-27 03:57:10.486 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_logged_out_data_is_protected (test_dashboard.TestDashboard.test_logged_out_data_is_protected) ... 2026-10-26 22:29:29.243 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_saved_dataset_and_analysis_reopen_only_for_their_owner (test_dashboard.TestDashboard.test_saved_dataset_and_analysis_reopen_only_for_their_owner) ... 2026-10-27 03:57:11.765 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-27 03:57:12.821 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_saved_dataset_and_analysis_reopen_only_for_their_owner (test_dashboard.TestDashboard.test_saved_dataset_and_analysis_reopen_only_for_their_owner) ... 2026-10-26 22:29:29.587 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-26 22:29:30.168 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_switching_models_keeps_the_correct_saved_analysis_reference (test_dashboard.TestDashboard.test_switching_models_keeps_the_correct_saved_analysis_reference) ... 2026-10-27 03:57:13.557 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_switching_models_keeps_the_correct_saved_analysis_reference (test_dashboard.TestDashboard.test_switching_models_keeps_the_correct_saved_analysis_reference) ... 2026-10-26 22:29:30.457 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
 test_class_distribution_integrity (test_data_loader.TestDataLoader.test_class_distribution_integrity)
-Verifies that fraud and legitimate class counts sum to total rows. ... [DataLoader] Successfully loaded dataset: 'C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\data\transactions.csv' (15000 rows, 9 columns)
+Verifies that fraud and legitimate class counts sum to total rows. ... [DataLoader] Successfully loaded dataset: '/workspace/scratch/19bb28379ee4/fraud-review/data/transactions.csv' (15000 rows, 9 columns)
 ok
 test_dataset_summary_structure (test_data_loader.TestDataLoader.test_dataset_summary_structure)
-Verifies get_dataset_summary returns all required metadata keys. ... [DataLoader] Successfully loaded dataset: 'C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\data\transactions.csv' (15000 rows, 9 columns)
+Verifies get_dataset_summary returns all required metadata keys. ... [DataLoader] Successfully loaded dataset: '/workspace/scratch/19bb28379ee4/fraud-review/data/transactions.csv' (15000 rows, 9 columns)
 ok
 test_file_exists_and_loads (test_data_loader.TestDataLoader.test_file_exists_and_loads)
-Verifies dataset exists and loads into a non-empty DataFrame. ... [DataLoader] Successfully loaded dataset: 'C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\data\transactions.csv' (15000 rows, 9 columns)
+Verifies dataset exists and loads into a non-empty DataFrame. ... [DataLoader] Successfully loaded dataset: '/workspace/scratch/19bb28379ee4/fraud-review/data/transactions.csv' (15000 rows, 9 columns)
 ok
 test_invalid_file_handling (test_data_loader.TestDataLoader.test_invalid_file_handling)
-Verifies FileNotFoundError is raised for non-existent dataset paths. ... [DataLoader] Successfully loaded dataset: 'C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\data\transactions.csv' (15000 rows, 9 columns)
+Verifies FileNotFoundError is raised for non-existent dataset paths. ... [DataLoader] Successfully loaded dataset: '/workspace/scratch/19bb28379ee4/fraud-review/data/transactions.csv' (15000 rows, 9 columns)
+ok
+test_case_and_outbox_insert_roll_back_together (test_delivery_reliability.TestDeliveryReliability.test_case_and_outbox_insert_roll_back_together) ... ok
+test_commit_failure_rewinds_without_republishing_acknowledged_alert (test_delivery_reliability.TestDeliveryReliability.test_commit_failure_rewinds_without_republishing_acknowledged_alert) ... ok
+test_compose_requires_deployment_secret (test_delivery_reliability.TestDeliveryReliability.test_compose_requires_deployment_secret) ... ok
+test_failed_delivery_does_not_commit_and_replay_retries (test_delivery_reliability.TestDeliveryReliability.test_failed_delivery_does_not_commit_and_replay_retries) ... Replaying event replay-001 with undelivered alert ALT-replay-001: completing delivery on recovery.
+ok
+test_live_alert_decoder_uses_json (test_delivery_reliability.TestDeliveryReliability.test_live_alert_decoder_uses_json) ... ok
+test_other_consumed_event_is_not_reported_as_request_completion (test_delivery_reliability.TestDeliveryReliability.test_other_consumed_event_is_not_reported_as_request_completion) ... ok
+test_restart_after_case_save_delivers_pending_alert_once (test_delivery_reliability.TestDeliveryReliability.test_restart_after_case_save_delivers_pending_alert_once) ... Simulating worker process crash after database save before alert dispatch!
+Replaying event replay-001 with undelivered alert ALT-replay-001: completing delivery on recovery.
 ok
 test_consumer_crash_recovery_before_offset_commit (test_kafka_streaming.TestKafkaStreaming.test_consumer_crash_recovery_before_offset_commit)
 Verify consumer crash recovery: exception raised after DB save, then fresh consumer recovers cleanly. ... Simulating worker process crash after database save before alert dispatch!
-Replaying event EVT-CRASH-TEST-001 with undelivered alert ALT-0B551FB0FE: completing delivery on recovery.
+Replaying event EVT-CRASH-TEST-001 with undelivered alert ALT-EVT-CRASH-TEST-001: completing delivery on recovery.
 ok
 test_consumer_detects_and_publishes_fraud_alert (test_kafka_streaming.TestKafkaStreaming.test_consumer_detects_and_publishes_fraud_alert) ... ok
 test_consumer_idempotency_and_duplicate_event_handling (test_kafka_streaming.TestKafkaStreaming.test_consumer_idempotency_and_duplicate_event_handling)
@@ -81,7 +91,7 @@ test_end_to_end_broker_queue_drain_and_alert_dispatch (test_kafka_streaming.Test
 Verify events actually enter the broker topic queue, are drained via consume_one, and alerts enter the alerts topic. ... ok
 test_live_consumer_manual_commit_and_crash_recovery_mechanics (test_kafka_streaming.TestKafkaStreaming.test_live_consumer_manual_commit_and_crash_recovery_mechanics)
 Verify that live Kafka consumer enforces manual offset commits (enable_auto_commit=False) and crash recovery. ... Simulating worker process crash after database save before alert dispatch!
-Replaying event EVT-LIVE-CRASH-002 with undelivered alert ALT-8D53F8E09A: completing delivery on recovery.
+Replaying event EVT-LIVE-CRASH-002 with undelivered alert ALT-EVT-LIVE-CRASH-002: completing delivery on recovery.
 ok
 test_producer_json_sanitization_and_metadata (test_kafka_streaming.TestKafkaStreaming.test_producer_json_sanitization_and_metadata) ... ok
 test_simulated_broker_fifo_and_offsets (test_kafka_streaming.TestKafkaStreaming.test_simulated_broker_fifo_and_offsets) ... ok
@@ -112,8 +122,7 @@ test_oversampling_preserves_categorical_transactions (test_ml_dl_workflow.TestPr
                    Legitimate (Class 0): 8,865
                    Fraudulent (Class 1): 8,865 (50.00%)
                    Balanced Ratio:       1:1
-findfont: Failed to find font weight semibold for DejaVu Sans, now using 700.
-[ImbalanceHandler] Saved SMOTE comparison plot: 'C:\Users\anime\AppData\Local\Temp\tmp39p_zztg\class_distribution_before_after_smote.png'
+[ImbalanceHandler] Saved SMOTE comparison plot: '/tmp/tmpnb1jxbok/class_distribution_before_after_smote.png'
 -----------------------------------------------------------------
 
 ok
@@ -133,13 +142,13 @@ Verifies that missing columns raise a clear descriptive ValueError. ... ok
 test_single_prediction_output_structure (test_prediction.TestFraudPredictor.test_single_prediction_output_structure)
 Verifies single transaction prediction outputs a valid alert object. ... ok
 test_feature_engineering_calculations (test_preprocessor.TestDataPreprocessor.test_feature_engineering_calculations)
-Verifies derived financial discrepancy features are correctly computed. ... [DataLoader] Successfully loaded dataset: 'C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\data\transactions.csv' (15000 rows, 9 columns)
+Verifies derived financial discrepancy features are correctly computed. ... [DataLoader] Successfully loaded dataset: '/workspace/scratch/19bb28379ee4/fraud-review/data/transactions.csv' (15000 rows, 9 columns)
 ok
 test_fit_transform_split_shapes (test_preprocessor.TestDataPreprocessor.test_fit_transform_split_shapes)
-Verifies train and test partitions adhere to 80:20 split and scaling. ... [DataLoader] Successfully loaded dataset: 'C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\data\transactions.csv' (15000 rows, 9 columns)
+Verifies train and test partitions adhere to 80:20 split and scaling. ... [DataLoader] Successfully loaded dataset: '/workspace/scratch/19bb28379ee4/fraud-review/data/transactions.csv' (15000 rows, 9 columns)
 ok
 test_transform_new_data_alignment (test_preprocessor.TestDataPreprocessor.test_transform_new_data_alignment)
-Verifies transform_new_data aligns column dimensions with training features. ... [DataLoader] Successfully loaded dataset: 'C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\data\transactions.csv' (15000 rows, 9 columns)
+Verifies transform_new_data aligns column dimensions with training features. ... [DataLoader] Successfully loaded dataset: '/workspace/scratch/19bb28379ee4/fraud-review/data/transactions.csv' (15000 rows, 9 columns)
 ok
 test_case_lifecycle_and_audit_trail (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_case_lifecycle_and_audit_trail)
 Verify full case lifecycle and immutable audit trail. ... ok
@@ -149,7 +158,7 @@ test_cost_threshold_simulator (test_reliability_and_investigation.TestReliabilit
 Verify threshold cost simulation and optimal threshold computation. ... ok
 test_crash_and_replay_idempotency (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_crash_and_replay_idempotency)
 Simulate a worker crash after writing a prediction to the database ... Simulating worker process crash after database save before alert dispatch!
-Replaying event EVT-1D6DB2934A2E with undelivered alert ALT-FE67B93F23: completing delivery on recovery.
+Replaying event EVT-5A05942C2E1D with undelivered alert ALT-EVT-5A05942C2E1D: completing delivery on recovery.
 ok
 test_cross_tenant_isolation (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_cross_tenant_isolation)
 Verify Tenant A cannot access Tenant B's data or analysis runs. ... ok
@@ -167,9 +176,9 @@ test_model_threshold_equality_flags_and_supplied_label_is_separate (test_transac
 test_no_label_is_fabricated_from_model_prediction (test_transaction_explanation.TestTransactionExplanation.test_no_label_is_fabricated_from_model_prediction) ... ok
 test_null_and_empty_inputs_are_safe (test_transaction_explanation.TestTransactionExplanation.test_null_and_empty_inputs_are_safe) ... ok
 test_partial_and_nonfinite_inputs_do_not_become_zero (test_transaction_explanation.TestTransactionExplanation.test_partial_and_nonfinite_inputs_do_not_become_zero) ... ok
-test_renderer_heading_matches_decision_and_can_hide_duplicate_table (test_transaction_explanation.TestTransactionExplanation.test_renderer_heading_matches_decision_and_can_hide_duplicate_table) ... 2026-10-27 03:57:25.635 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-27 03:57:26.110 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-27 03:57:26.513 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_renderer_heading_matches_decision_and_can_hide_duplicate_table (test_transaction_explanation.TestTransactionExplanation.test_renderer_heading_matches_decision_and_can_hide_duplicate_table) ... 2026-10-26 22:29:35.645 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-26 22:29:35.796 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-26 22:29:35.956 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
 test_zero_opening_balance_has_no_infinite_ratio (test_transaction_explanation.TestTransactionExplanation.test_zero_opening_balance_has_no_infinite_ratio) ... ok
 test_active_workspace_is_owned_and_persists_across_restarts (test_workspace_store.TestWorkspaceStore.test_active_workspace_is_owned_and_persists_across_restarts) ... ok
@@ -187,6 +196,6 @@ test_unicode_user_and_normalized_authentication (test_workspace_store.TestWorksp
 test_untrusted_text_is_stored_as_data (test_workspace_store.TestWorkspaceStore.test_untrusted_text_is_stored_as_data) ... ok
 
 ----------------------------------------------------------------------
-Ran 97 tests in 45.938s
+Ran 104 tests in 15.587s
 
 OK

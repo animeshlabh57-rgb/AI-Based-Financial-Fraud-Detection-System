@@ -487,6 +487,9 @@ def publish_streaming_event(
     raw_event = event.model_dump()
     store = get_store()
 
+    if mode not in ('auto', 'simulation', 'live'):
+        raise HTTPException(status_code=400, detail='Invalid streaming mode.')
+    producer = consumer = None
     if mode == "live":
         try:
             producer = TransactionStreamProducer(use_simulated=False, allow_fallback=False)
@@ -501,6 +504,11 @@ def publish_streaming_event(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"Live Kafka streaming unavailable: {exc}. Ensure Kafka broker is running on {config.KAFKA_BOOTSTRAP_SERVERS}.",
             )
+        finally:
+            if consumer is not None:
+                consumer.stop()
+            if producer is not None:
+                producer.close()
     else:
         # Simulated or auto mode with thread-safe broker queue
         producer = TransactionStreamProducer(use_simulated=True, simulated_broker=_simulated_broker)
@@ -525,7 +533,7 @@ def publish_streaming_event(
 
     consumed_id = processed_alert.get("event_id")
     return {
-        "status": "stream_consumed_and_scored",
+        "status": "stream_consumed_and_scored" if consumed_id == expected_event_id else "published_pending_consumption",
         "streaming_engine": streaming_engine,
         "event_id": expected_event_id,
         "consumed_event_id": consumed_id,
@@ -546,6 +554,7 @@ def get_streaming_alerts(
     authenticate_request(x_api_key=x_api_key, x_analyst_id=x_analyst_id)
     alerts = []
     if mode == "live":
+        live_consumer = None
         try:
             from kafka import KafkaConsumer
             live_consumer = KafkaConsumer(
@@ -561,12 +570,14 @@ def get_streaming_alerts(
             for _, messages in raw_batch.items():
                 for msg in messages:
                     alerts.append(msg.value)
-            live_consumer.close()
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"Live Kafka alert retrieval failed: {exc}. Ensure broker is running at {config.KAFKA_BOOTSTRAP_SERVERS} or use mode=simulation.",
             )
+        finally:
+            if live_consumer is not None:
+                live_consumer.close()
     elif mode == "simulation":
         history = _simulated_broker.get_history(config.KAFKA_ALERTS_TOPIC, limit=limit)
         for msg in history:

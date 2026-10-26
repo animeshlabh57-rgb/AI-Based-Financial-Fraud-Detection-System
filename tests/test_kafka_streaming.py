@@ -360,6 +360,7 @@ class TestKafkaStreaming(unittest.TestCase):
             def __init__(self, messages):
                 self.messages = list(messages)
                 self.committed_offsets = []
+                self.seek_calls = []
 
             def poll(self, timeout_ms=1000, max_records=1):
                 if not self.messages:
@@ -369,6 +370,9 @@ class TestKafkaStreaming(unittest.TestCase):
 
             def commit(self):
                 self.committed_offsets.append(True)
+
+            def seek(self, partition, offset):
+                self.seek_calls.append((partition, offset))
 
         event_payload = {
             'event_id': 'EVT-LIVE-CRASH-001',
@@ -415,6 +419,7 @@ class TestKafkaStreaming(unittest.TestCase):
             crash_consumer.consume_one(timeout=0.5)
         # Verified: commit was NOT executed due to crash!
         self.assertEqual(len(mock_crash_c.committed_offsets), 0)
+        self.assertEqual(mock_crash_c.seek_calls, [('topic', 1)])
 
         # 3. Restarted consumer re-reads uncommitted offset and handles idempotently
         recovered_consumer = FraudStreamingConsumer(
