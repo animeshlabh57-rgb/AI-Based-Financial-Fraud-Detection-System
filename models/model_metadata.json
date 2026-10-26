@@ -1,0 +1,88 @@
+{
+  "best_model": "XGBoost",
+  "selection_rule": "Validation average precision (PR-AUC), then F1, then recall",
+  "threshold_rule": "Maximum validation F1; tied F1 uses higher threshold",
+  "validation_metrics": [
+    {
+      "Model": "Random Forest",
+      "Family": "Machine Learning",
+      "PR-AUC": 0.8878973373250836,
+      "F1-Score": 0.8433734939759038,
+      "Recall (Sensitivity)": 0.7777777777777778,
+      "Threshold": 0.74
+    },
+    {
+      "Model": "XGBoost",
+      "Family": "Machine Learning",
+      "PR-AUC": 0.9020059377055798,
+      "F1-Score": 0.8705882352941177,
+      "Recall (Sensitivity)": 0.8222222222222222,
+      "Threshold": 0.9445438385009766
+    },
+    {
+      "Model": "Deep Neural Network",
+      "Family": "Deep Learning",
+      "PR-AUC": 0.8473028894374527,
+      "F1-Score": 0.8607594936708861,
+      "Recall (Sensitivity)": 0.7555555555555555,
+      "Threshold": 0.9993293623636901
+    },
+    {
+      "Model": "Deep Autoencoder",
+      "Family": "Deep Learning",
+      "PR-AUC": 0.8828275305705108,
+      "F1-Score": 0.888888888888889,
+      "Recall (Sensitivity)": 0.8,
+      "Threshold": 0.8706721772244265
+    }
+  ],
+  "models": {
+    "Random Forest": {
+      "file": "random_forest_model.joblib",
+      "family": "Machine Learning",
+      "threshold": 0.74,
+      "training_seconds": 1.5977196999883745,
+      "score_kind": "uncalibrated classifier score"
+    },
+    "XGBoost": {
+      "file": "xgboost_model.joblib",
+      "family": "Machine Learning",
+      "threshold": 0.9445438385009766,
+      "training_seconds": 1.7424987999838777,
+      "score_kind": "uncalibrated classifier score"
+    },
+    "Deep Neural Network": {
+      "file": "deep_neural_network.joblib",
+      "family": "Deep Learning",
+      "threshold": 0.9993293623636901,
+      "training_seconds": 3.669842700008303,
+      "score_kind": "uncalibrated classifier score",
+      "hidden_layers": [
+        64,
+        32,
+        16
+      ],
+      "best_epoch": 33,
+      "epochs_run": 48,
+      "parameters": 3585
+    },
+    "Deep Autoencoder": {
+      "file": "deep_autoencoder.joblib",
+      "family": "Deep Learning",
+      "threshold": 0.8706721772244265,
+      "training_seconds": 5.68869799998356,
+      "score_kind": "normalized reconstruction anomaly score",
+      "hidden_layers": [
+        64,
+        32,
+        8,
+        32,
+        64
+      ],
+      "best_epoch": 99,
+      "epochs_run": 100,
+      "parameters": 6614,
+      "legitimate_training_rows": 8865
+    }
+  }
+}

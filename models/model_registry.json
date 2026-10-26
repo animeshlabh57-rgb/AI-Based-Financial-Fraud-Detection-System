@@ -1,0 +1,52 @@
+{
+  "active_version": "v1.0.0-xgb-consensus",
+  "versions": {
+    "v1.0.0-xgb-consensus": {
+      "version_id": "v1.0.0-xgb-consensus",
+      "model_name": "XGBoost",
+      "family": "Gradient Boosted Tree Ensemble",
+      "preprocessor_version": "v1.0.0-robust-forensics",
+      "dataset_identifier": "PaySim-Synthetic-15K-v1",
+      "calibrated_threshold": 0.9445,
+      "pr_auc": 0.9418,
+      "f1_score": 0.8889,
+      "created_at": "2026-10-25T12:00:00Z",
+      "status": "ACTIVE_PRODUCTION",
+      "description": "Primary high-precision gradient boosted ensemble with balance forensics."
+    },
+    "v0.9.0-rf-baseline": {
+      "version_id": "v0.9.0-rf-baseline",
+      "model_name": "Random Forest",
+      "family": "Bagged Decision Tree Ensemble",
+      "preprocessor_version": "v1.0.0-robust-forensics",
+      "dataset_identifier": "PaySim-Synthetic-15K-v1",
+      "calibrated_threshold": 0.74,
+      "pr_auc": 0.8879,
+      "f1_score": 0.8434,
+      "created_at": "2026-10-24T09:00:00Z",
+      "status": "ARCHIVED_VALIDATED",
+      "description": "Initial baseline random forest model (100 estimators)."
+    },
+    "v1.1.0-full-consensus": {
+      "version_id": "v1.1.0-full-consensus",
+      "model_name": "Full Consensus Fusion",
+      "family": "Multi-Modal Hybrid (Tree + Neural Bottleneck)",
+      "preprocessor_version": "v1.0.0-robust-forensics",
+      "dataset_identifier": "PaySim-Synthetic-15K-v1",
+      "calibrated_threshold": 0.785,
+      "pr_auc": 0.9555,
+      "f1_score": 0.8989,
+      "created_at": "2026-10-26T18:00:00Z",
+      "status": "CANDIDATE_DEPLOYED",
+      "description": "Full 4-model weighted consensus fusion (RF + XGB + DNN + AE)."
+    }
+  },
+  "audit_history": [
+    {
+      "action": "REGISTRY_INITIALIZED",
+      "timestamp": "2026-10-26T19:32:58.077957+00:00",
+      "user": "SYSTEM_INITIALIZATION",
+      "version": "v1.0.0-xgb-consensus"
+    }
+  ]
+}

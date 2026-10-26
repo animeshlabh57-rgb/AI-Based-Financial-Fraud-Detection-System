@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------
+  # FraudGuard AI: FastAPI RESTful Microservice Layer
+  # -------------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fraudguard-api
+    command: uvicorn src.api:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_TRANSACTIONS_TOPIC=financial.transactions
+      - KAFKA_ALERTS_TOPIC=financial.fraud-alerts
+    volumes:
+      - ./storage:/app/storage
+      - ./logs:/app/logs
+      - ./results:/app/results
+    restart: unless-stopped
+
+  # -------------------------------------------------------------
+  # FraudGuard AI: Streamlit Analyst Investigation Dashboard
+  # -------------------------------------------------------------
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fraudguard-dashboard
+    command: streamlit run dashboard/app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    environment:
+      - API_GATEWAY_URL=http://api:8000
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    volumes:
+      - ./storage:/app/storage
+      - ./logs:/app/logs
+      - ./results:/app/results
+    restart: unless-stopped
+
+  # -------------------------------------------------------------
+  # Optional Apache Kafka & Zookeeper (for distributed streaming)
+  # -------------------------------------------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: fraudguard-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: fraudguard-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    restart: unless-stopped

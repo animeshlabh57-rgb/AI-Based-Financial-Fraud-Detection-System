@@ -1,0 +1,5 @@
+Model,Accuracy,Precision,Recall (Sensitivity),Specificity,F1-Score,ROC-AUC,PR-AUC,True Positives,False Positives,True Negatives,False Negatives,Family,Threshold,Training Seconds
+Random Forest,0.996,0.8235,0.9333,0.997,0.875,0.9989,0.9581,42,9,2946,3,Machine Learning,0.74,1.598
+XGBoost,0.9967,0.8889,0.8889,0.9983,0.8889,0.9968,0.9418,40,5,2950,5,Machine Learning,0.9445438385009766,1.742
+Deep Neural Network,0.9983,1.0,0.8889,1.0,0.9412,0.9863,0.9307,40,0,2955,5,Deep Learning,0.9993293623636901,3.67
+Deep Autoencoder,0.9983,0.9762,0.9111,0.9997,0.9425,0.9909,0.9586,41,1,2954,4,Deep Learning,0.8706721772244265,5.689

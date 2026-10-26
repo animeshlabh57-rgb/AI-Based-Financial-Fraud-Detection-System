@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Streamlit Dashboard",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m streamlit run dashboard/app.py --server.address localhost",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run Kafka Streaming Demo",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe scripts/run_kafka_streaming.py --events 30 --rate 10 --mode simulated",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Pipeline (main.py)",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe main.py",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run All Tests",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m unittest discover -s tests -p \"test_*.py\"",
+      "problemMatcher": []
+    }
+  ]
+}

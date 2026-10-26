@@ -1,0 +1,4 @@
+interface:
+  display_name: "Human"
+  short_description: "Write natural prose with accurate meaning"
+  default_prompt: "Use $human to revise this text in clear, natural prose while preserving its meaning."
