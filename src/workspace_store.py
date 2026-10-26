@@ -519,6 +519,8 @@ class WorkspaceStore:
         model_version: str = 'v1.0.0-xgb-consensus',
         preprocessor_version: str = 'v1.0.0-robust',
         decision_threshold: float = 0.5,
+        alert_payload: dict | None = None,
+        alert_topic: str = "financial.fraud-alerts",
     ) -> tuple[dict, bool]:
         """
         Idempotently create or retrieve an investigation case for an incoming event.
@@ -531,6 +533,7 @@ class WorkspaceStore:
         explanation_str = json.dumps(explanation or {})
 
         with self._lock, self._connection:
+            self._connection.execute("BEGIN IMMEDIATE")
             # Check existing event
             existing = self._connection.execute(
                 'SELECT * FROM investigation_cases WHERE event_id = ?', (event_id,)
@@ -554,6 +557,17 @@ class WorkspaceStore:
                  now, now),
             )
 
+            # Save the alert and case atomically; no crash gap between transactions.
+            if alert_payload is not None:
+                payload = dict(alert_payload, case_id=case_id)
+                self._connection.execute(
+                    """INSERT INTO pending_alerts
+                       (alert_id, event_id, topic, message_key, payload_json, status, created_at)
+                       VALUES (?, ?, ?, ?, ?, 'PENDING', ?)""",
+                    (payload['alert_id'], event_id, alert_topic,
+                     payload['transaction_id'], json.dumps(payload), now),
+                )
+
             # Record creation in immutable audit trail
             self._connection.execute(
                 '''INSERT INTO case_audit_log
@@ -568,6 +582,10 @@ class WorkspaceStore:
                 'SELECT * FROM investigation_cases WHERE case_id = ?', (case_id,)
             ).fetchone()
             return dict(created_row), True
+
+    def pending_alert(self, event_id):
+        row = self.get_pending_alert_by_event(event_id)
+        return json.loads(row['payload_json']) if row and row['status'] == 'PENDING' else None
 
     def update_case(
         self,

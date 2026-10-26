@@ -21,7 +21,7 @@ services:
     environment:
       - PRODUCTION=1
       - FRAUDGUARD_API_KEY=${FRAUDGUARD_API_KEY:?Set FRAUDGUARD_API_KEY}
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - KAFKA_TRANSACTIONS_TOPIC=financial.transactions
       - KAFKA_ALERTS_TOPIC=financial.fraud-alerts
     volumes:
@@ -52,7 +52,7 @@ services:
       start_period: 15s
     environment:
       - API_GATEWAY_URL=http://api:8000
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     volumes:
       - ./storage:/app/storage
       - ./logs:/app/logs
@@ -83,7 +83,9 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     restart: unless-stopped

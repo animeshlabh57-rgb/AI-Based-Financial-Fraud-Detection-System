@@ -178,6 +178,7 @@ class TransactionStreamProducer:
             from kafka import KafkaProducer
             self._live_producer = KafkaProducer(
                 bootstrap_servers=self.bootstrap_servers.split(','),
+                acks='all',
                 value_serializer=lambda v: json.dumps(v).encode('utf-8'),
                 key_serializer=lambda k: k.encode('utf-8') if k else None,
                 request_timeout_ms=3000,
@@ -216,7 +217,7 @@ class TransactionStreamProducer:
         key_str = str(key or sanitized.get('Transaction_ID') or event_id)
 
         if not self.use_simulated and self._live_producer is not None:
-            self._live_producer.send(self.topic, key=key_str, value=payload)
+            self._live_producer.send(self.topic, key=key_str, value=payload).get(timeout=10)
         else:
             value_bytes = json.dumps(payload).encode('utf-8')
             self._broker.publish(self.topic, key=key_str, value=value_bytes,
@@ -336,6 +337,7 @@ class FraudStreamingConsumer:
             )
             self._live_alert_producer = KafkaProducer(
                 bootstrap_servers=self.bootstrap_servers.split(','),
+                acks='all',
                 value_serializer=lambda v: json.dumps(v).encode('utf-8'),
                 key_serializer=lambda k: k.encode('utf-8') if k else None,
             )
@@ -396,10 +398,9 @@ class FraudStreamingConsumer:
         """Publish alert to the alert topic and synchronously await broker acknowledgment."""
         key = str(alert_event.get('transaction_id', ''))
         if not self.use_simulated and self._live_alert_producer is not None:
-            key_bytes = key.encode('utf-8') if key else None
             future = self._live_alert_producer.send(
                 self.alerts_topic,
-                key=key_bytes,
+                key=key or None,
                 value=alert_event,
             )
             # Synchronously wait for broker acknowledgment to guarantee delivery before committing input offset
@@ -546,7 +547,7 @@ class FraudStreamingConsumer:
         alert_id = None
         alert_event = None
         if is_flagged:
-            alert_id = f'ALT-{uuid.uuid4().hex[:10].upper()}'
+            alert_id = f'ALT-{event_id}'
             alert_event = {
                 'alert_id': alert_id,
                 **processed_record,
@@ -570,20 +571,12 @@ class FraudStreamingConsumer:
                 model_version='v1.0.0-xgb-consensus',
                 preprocessor_version='v1.0.0-robust',
                 decision_threshold=threshold_val,
+                alert_payload=alert_event,
+                alert_topic=self.alerts_topic,
             )
             case_id = case_data.get('case_id')
             processed_record['case_id'] = case_id
             processed_record['was_created'] = was_created
-
-            # Persist pending alert in SQLite BEFORE attempting broker dispatch
-            if is_flagged and alert_event is not None:
-                self.store.record_pending_alert(
-                    alert_id=alert_id,
-                    event_id=event_id,
-                    topic=self.alerts_topic,
-                    message_key=alert_event['transaction_id'],
-                    payload=alert_event,
-                )
 
             # 4. Crash simulation hook: test crash after DB write but BEFORE alert dispatch & offset commit
             if self.simulate_crash_before_commit:
@@ -591,9 +584,9 @@ class FraudStreamingConsumer:
                 raise RuntimeError(f"SimulatedConsumerCrash: Process died before alert delivery for event {event_id} (Case {case_id} saved).")
 
         if is_flagged and alert_event is not None:
-            self.alerts_published += 1
             # Synchronously publish alert to Kafka topic and await broker acknowledgment
             self._publish_alert_synchronous(alert_event)
+            self.alerts_published += 1
             if self.store is not None:
                 self.store.mark_alert_delivered(alert_id)
 
@@ -610,14 +603,17 @@ class FraudStreamingConsumer:
         """Poll and process a single message from the input stream with manual offset commit."""
         if not self.use_simulated and self._live_consumer is not None:
             raw_batch = self._live_consumer.poll(timeout_ms=int(timeout * 1000), max_records=1)
-            for _, messages in raw_batch.items():
+            for partition, messages in raw_batch.items():
                 for msg in messages:
-                    res = self.process_message(msg.value)
-                    # Manually commit offset ONLY after successful processing and database save
                     try:
+                        res = self.process_message(msg.value)
+                        # Commit only after database persistence and acknowledged alert delivery.
                         self._live_consumer.commit()
-                    except Exception as commit_exc:
-                        logger.error('Failed to commit Kafka offset: %s', commit_exc)
+                    except Exception:
+                        # poll() advances the local position even without a committed offset.
+                        # Rewind so a running worker retries instead of skipping the failed event.
+                        self._live_consumer.seek(partition, msg.offset)
+                        raise
                     return res
             return None
         else:
