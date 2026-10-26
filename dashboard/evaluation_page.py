@@ -427,7 +427,7 @@ def render_evaluation_page(metadata, read_csv, current_dataset=None, store=None,
             benchmark_options = {
                 'Synthetic Sample Test (30 rows, fast demo)': config.SAMPLE_TEST_PATH,
                 'Curated Fraud Cases (50 high-risk fraud cases)': 'data/fraud_cases_test.csv',
-                'PaySim Sample (1,000 mobile-money rows)': 'data/paysim_sample_1000.csv',
+                'Secondary Synthetic Benchmark (1,000 PaySim-schema rows)': 'data/paysim_sample_1000.csv',
                 'Full Benchmark Transactions (15,000 rows)': config.TRANSACTIONS_CSV_PATH,
             }
             chosen_bench = st.selectbox('Choose a pre-packaged benchmark dataset', list(benchmark_options.keys()), key='eval_quick_bench_sel')

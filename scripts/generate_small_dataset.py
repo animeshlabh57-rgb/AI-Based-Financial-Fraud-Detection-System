@@ -1,4 +1,17 @@
-"""Generate a realistic 10-15 MB benchmark dataset matching PaySim schema (<25MB upload limit)."""
+"""Generate a custom secondary synthetic benchmark dataset adhering to PaySim schema (<25MB).
+
+PROVENANCE & METHODOLOGY NOTICE:
+This script generates a custom synthetic dataset using NumPy pseudorandom distributions (seed=42).
+While it mirrors the 11-column schema of the PaySim mobile-money simulation (step, type, amount,
+nameOrig, oldbalanceOrg, newbalanceOrig, nameDest, oldbalanceDest, newbalanceDest, isFraud,
+isFlaggedFraud), it is NOT an official external PaySim release from Kaggle/research publications.
+
+Provenance and sampling procedure:
+1. Full Secondary Benchmark: Generates 120,000 rows (~12 MB) to data/paysim_benchmark_12mb.csv.
+2. 1,000-Row Evaluation Sample: Deterministically extracts the first 1,000 rows to
+   data/paysim_sample_1000.csv (containing exactly 15 fraud instances, 1.5% fraud rate).
+3. Purpose: Stress-tests model transferability against cross-generator distribution shift.
+"""
 
 import os
 import sys
@@ -7,6 +20,7 @@ import pandas as pd
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUTPUT_CSV = os.path.join(BASE_DIR, "data", "paysim_benchmark_12mb.csv")
+OUTPUT_SAMPLE_CSV = os.path.join(BASE_DIR, "data", "paysim_sample_1000.csv")
 
 def generate_sample(target_rows=120000):
     np.random.seed(42)
@@ -106,6 +120,12 @@ def generate_sample(target_rows=120000):
     df.to_csv(OUTPUT_CSV, index=False)
     size_mb = os.path.getsize(OUTPUT_CSV) / (1024 * 1024)
     print(f"Generated {OUTPUT_CSV}: {len(df):,} rows, {size_mb:.2f} MB (within 25 MB limit)")
+
+    # Explicitly document and export the 1,000-row sample for distribution-shift evaluation
+    sample_1k = df.head(1000)
+    sample_1k.to_csv(OUTPUT_SAMPLE_CSV, index=False)
+    sample_fraud = int(sample_1k['isFraud'].sum())
+    print(f"Sampled {OUTPUT_SAMPLE_CSV}: {len(sample_1k):,} rows ({sample_fraud} fraud, {sample_fraud/len(sample_1k)*100:.1f}%)")
 
 if __name__ == "__main__":
     generate_sample()

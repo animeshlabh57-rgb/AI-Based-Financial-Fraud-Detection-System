@@ -18,11 +18,19 @@ class TestFraudDetectionAPI(unittest.TestCase):
         cls.client = TestClient(
             app,
             headers={
-                "X-API-Key": config.DEFAULT_API_KEY,
+                "X-API-Key": config.TEST_API_KEY,
                 "X-Analyst-ID": "analyst-automated-test",
             },
         )
         cls.unauth_client = TestClient(app)
+
+    def setUp(self):
+        from src.api import get_store
+        get_store().reset_rate_limits()
+
+    def tearDown(self):
+        from src.api import get_store
+        get_store().reset_rate_limits()
 
     def test_root_endpoint(self):
         """Test GET / returns API metadata and service identity."""
@@ -206,6 +214,45 @@ class TestFraudDetectionAPI(unittest.TestCase):
         # Should return 503 because live broker on localhost:9092 is not running
         self.assertEqual(response.status_code, 503)
         self.assertIn("Live Kafka streaming unavailable", response.json()["detail"])
+
+    def test_rate_limiting_tied_to_authenticated_identity_not_analyst_header(self):
+        """Verify rate limiting binds to authenticated API key hash and changing X-Analyst-ID does not bypass limits."""
+        payload = {
+            "type": "PAYMENT",
+            "amount": 10.0,
+            "oldbalanceOrg": 100.0,
+            "newbalanceOrig": 90.0,
+            "oldbalanceDest": 0.0,
+            "newbalanceDest": 10.0,
+            "step": 1
+        }
+        # Simulate hitting rate limit on store directly
+        from src.api import get_store
+        import config
+        import hashlib
+        key_hash = hashlib.sha256(config.TEST_API_KEY.encode()).hexdigest()[:16]
+        client_key = key_hash
+        store = get_store()
+        # Consume quota
+        for _ in range(125):
+            store.check_and_record_rate_limit(client_key, limit=120, window_seconds=60.0)
+
+        # Attempt call with attacker changing X-Analyst-ID to evade limiter
+        evasion_headers = {
+            "X-API-Key": config.TEST_API_KEY,
+            "X-Analyst-ID": "analyst_different_spoofed_id_999",
+        }
+        resp = self.client.post("/predict", json=payload, headers=evasion_headers)
+        self.assertEqual(resp.status_code, 429)
+        self.assertIn("Rate limit exceeded", resp.json()["detail"])
+
+    def test_stream_alerts_endpoint(self):
+        """Test GET /stream/alerts returns history of consumer-scored alerts."""
+        resp = self.client.get("/stream/alerts?mode=simulation")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("total_alerts", data)
+        self.assertIn("alerts", data)
 
 
 if __name__ == "__main__":

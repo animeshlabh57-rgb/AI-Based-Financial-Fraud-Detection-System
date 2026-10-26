@@ -97,9 +97,18 @@ RISK_ACTIONS = {
     'CRITICAL': 'Urgent manual fraud review recommended; consider a temporary transaction hold.'
 }
 
-# API Gateway Security & Limits
-DEFAULT_API_KEY = 'fg-analyst-key-2026-sec'
+# API Gateway Security & Limits: Require environment-provided secrets in production
 API_KEY_ENABLED = os.environ.get('FRAUDGUARD_API_KEY_ENABLED', 'True').lower() in ('true', '1')
-VALID_API_KEYS = {k.strip() for k in os.environ.get('FRAUDGUARD_API_KEYS', f'{DEFAULT_API_KEY},admin-key-sec-9901,analyst-test-key').split(',') if k.strip()}
+ENV_API_KEY = os.environ.get('FRAUDGUARD_API_KEY')
+_raw_keys = os.environ.get('FRAUDGUARD_API_KEYS', '')
+VALID_API_KEYS = {k.strip() for k in _raw_keys.split(',') if k.strip()}
+if ENV_API_KEY:
+    VALID_API_KEYS.add(ENV_API_KEY.strip())
+
+# Safe fallback strictly for automated local testing when no env variable is supplied
+TEST_API_KEY = 'test-analyst-secret-offline'
+if not VALID_API_KEYS and not os.environ.get('PRODUCTION'):
+    VALID_API_KEYS.add(TEST_API_KEY)
+
 MAX_BATCH_SIZE = int(os.environ.get('FRAUDGUARD_MAX_BATCH_SIZE', '5000'))
 RATE_LIMIT_PER_MINUTE = int(os.environ.get('FRAUDGUARD_RATE_LIMIT', '120'))

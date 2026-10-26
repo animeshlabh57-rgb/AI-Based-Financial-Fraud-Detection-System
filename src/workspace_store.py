@@ -16,6 +16,7 @@ import re
 import secrets
 import sqlite3
 import threading
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -155,6 +156,12 @@ class WorkspaceStore:
                     timestamp TEXT NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS idx_case_audit ON case_audit_log(case_id, id ASC);
+
+                CREATE TABLE IF NOT EXISTS api_rate_limits (
+                    client_key TEXT NOT NULL,
+                    timestamp REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_rate_limits_key_ts ON api_rate_limits(client_key, timestamp);
             ''')
             # Additive migration: old account/dataset/result rows stay intact.
             columns = {row['name'] for row in self._connection.execute('PRAGMA table_info(runs)')}
@@ -654,6 +661,33 @@ class WorkspaceStore:
                 (str(case_id).strip(),)
             ).fetchall()
             return [dict(r) for r in rows]
+
+    def check_and_record_rate_limit(self, client_key: str, limit: int = 120, window_seconds: float = 60.0) -> bool:
+        """Process-safe sliding window rate limiter shared across all workers in SQLite."""
+        now = time.time()
+        cutoff = now - window_seconds
+        with self._lock, self._connection:
+            self._connection.execute('DELETE FROM api_rate_limits WHERE timestamp < ?', (cutoff,))
+            cur = self._connection.execute(
+                'SELECT COUNT(*) FROM api_rate_limits WHERE client_key = ? AND timestamp >= ?',
+                (client_key, cutoff)
+            )
+            count = cur.fetchone()[0]
+            if count >= limit:
+                return False
+            self._connection.execute(
+                'INSERT INTO api_rate_limits (client_key, timestamp) VALUES (?, ?)',
+                (client_key, now)
+            )
+            return True
+
+    def reset_rate_limits(self, client_key: str | None = None):
+        """Reset rate limit entries, optionally for a specific client."""
+        with self._lock, self._connection:
+            if client_key:
+                self._connection.execute('DELETE FROM api_rate_limits WHERE client_key = ?', (client_key,))
+            else:
+                self._connection.execute('DELETE FROM api_rate_limits')
 
     def ping(self) -> bool:
         """Verify SQLite database connectivity and alive state."""

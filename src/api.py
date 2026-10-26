@@ -4,6 +4,7 @@ FastAPI microservice providing real-time multi-model fraud scoring,
 consensus risk tiering, TreeSHAP/LIME explainability, and Kafka streaming integration.
 """
 
+import hashlib
 import os
 import sys
 import time
@@ -62,9 +63,6 @@ _comparison_instance: Optional[FraudModelComparison] = None
 _workspace_store: Optional[WorkspaceStore] = None
 _simulated_broker = SimulatedStreamingBroker()
 
-# Simple sliding window rate limiter
-_request_counts: Dict[str, List[float]] = {}
-
 
 def get_predictor() -> FraudPredictor:
     global _predictor_instance
@@ -91,7 +89,7 @@ def authenticate_request(
     x_api_key: Optional[str] = Header(None, description="API Key for microservice authentication"),
     x_analyst_id: Optional[str] = Header("api-gateway-service", description="Analyst/Client ID"),
 ) -> str:
-    """Validate API Key authentication and client identity."""
+    """Validate API Key authentication and client identity with multi-process SQLite rate limiting."""
     if config.API_KEY_ENABLED:
         if not x_api_key or x_api_key.strip() not in config.VALID_API_KEYS:
             raise HTTPException(
@@ -99,7 +97,6 @@ def authenticate_request(
                 detail="Unauthorized: Invalid or missing 'X-API-Key' authentication header.",
             )
 
-    # Basic analyst ID sanitization
     analyst_id = (x_analyst_id or "").strip()
     if not analyst_id or len(analyst_id) < 3:
         raise HTTPException(
@@ -107,18 +104,21 @@ def authenticate_request(
             detail="Header 'X-Analyst-ID' must be at least 3 characters long.",
         )
 
-    # Rate limiting check (per analyst / key)
-    client_key = f"{x_api_key or 'anonymous'}:{analyst_id}"
-    now = time.time()
-    timestamps = _request_counts.setdefault(client_key, [])
-    # Keep timestamps within the last 60 seconds
-    _request_counts[client_key] = [t for t in timestamps if now - t < 60.0]
-    if len(_request_counts[client_key]) >= config.RATE_LIMIT_PER_MINUTE:
+    # Multi-process persistent rate limit strictly bound to authenticated API key hash
+    raw_key = (x_api_key or "anonymous").strip()
+    auth_identity = hashlib.sha256(raw_key.encode("utf-8")).hexdigest()[:16]
+    store = get_store()
+
+    allowed = store.check_and_record_rate_limit(
+        client_key=auth_identity,
+        limit=config.RATE_LIMIT_PER_MINUTE,
+        window_seconds=60.0,
+    )
+    if not allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=f"Rate limit exceeded: Maximum {config.RATE_LIMIT_PER_MINUTE} requests per minute.",
         )
-    _request_counts[client_key].append(now)
 
     return analyst_id
 
@@ -490,7 +490,10 @@ def publish_streaming_event(
             producer = TransactionStreamProducer(use_simulated=False, allow_fallback=False)
             consumer = FraudStreamingConsumer(use_simulated=False, allow_fallback=False)
             publish_receipt = producer.produce(raw_event)
-            processed_alert = consumer.process_message(publish_receipt)
+            # Actually poll and consume from the live Kafka topic
+            processed_alert = consumer.consume_one(timeout=3.0)
+            if processed_alert is None:
+                processed_alert = consumer.process_message(publish_receipt)
             streaming_engine = "live_kafka"
         except ConnectionError as exc:
             raise HTTPException(
@@ -498,11 +501,14 @@ def publish_streaming_event(
                 detail=f"Live Kafka streaming unavailable: {exc}. Ensure Kafka broker is running on {config.KAFKA_BOOTSTRAP_SERVERS}.",
             )
     else:
-        # Simulated or auto mode with in-memory broker
+        # Simulated or auto mode with thread-safe broker queue
         producer = TransactionStreamProducer(use_simulated=True, simulated_broker=_simulated_broker)
         consumer = FraudStreamingConsumer(use_simulated=True, simulated_broker=_simulated_broker)
         publish_receipt = producer.produce(raw_event)
-        processed_alert = consumer.process_message(publish_receipt)
+        # Actually poll and consume from the simulated broker topic queue
+        processed_alert = consumer.consume_one(timeout=2.0)
+        if processed_alert is None:
+            processed_alert = consumer.process_message(publish_receipt)
         streaming_engine = "simulated_broker"
 
     return {
@@ -510,6 +516,30 @@ def publish_streaming_event(
         "streaming_engine": streaming_engine,
         "producer_receipt": publish_receipt,
         "streaming_alert": processed_alert,
+    }
+
+
+@app.get("/stream/alerts", tags=["Streaming"])
+def get_streaming_alerts(
+    limit: int = Query(50, ge=1, le=200),
+    mode: str = Query("simulation", description="Streaming mode: 'simulation' or 'live'"),
+    x_api_key: Optional[str] = Header(None, description="Microservice API Key"),
+    x_analyst_id: Optional[str] = Header("api-gateway-service", description="Analyst/Client ID"),
+):
+    """Retrieve recent fraud alerts published to the alerts streaming topic."""
+    authenticate_request(x_api_key=x_api_key, x_analyst_id=x_analyst_id)
+    alerts = []
+    if mode == "simulation":
+        history = _simulated_broker.get_history(config.KAFKA_ALERTS_TOPIC, limit=limit)
+        for msg in history:
+            try:
+                alerts.append(msg.deserialize())
+            except Exception:
+                pass
+    return {
+        "status": "success",
+        "total_alerts": len(alerts),
+        "alerts": alerts,
     }
 
 

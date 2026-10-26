@@ -1,12 +1,25 @@
 {
   "benchmark_file": "paysim_sample_1000.csv",
-  "evaluated_at_utc": "2026-10-26T21:29:37.321589+00:00",
+  "dataset_provenance": {
+    "type": "Secondary Synthetic Benchmark (PaySim schema compatible)",
+    "generator_script": "scripts/generate_small_dataset.py",
+    "random_seed": 42,
+    "is_official_kaggle_paysim": false,
+    "description": "Generated locally via NumPy random distributions with PaySim column schema. Sampled as the first 1,000 transactions of data/paysim_benchmark_12mb.csv."
+  },
+  "evaluated_at_utc": "2026-10-26T21:43:42.065370+00:00",
   "dataset_summary": {
     "total_rows": 1000,
     "fraud_rows": 15,
     "fraud_prevalence_pct": 1.5
   },
-  "methodological_notes": "Models were trained exclusively on the 15,000 local synthetic benchmark dataset. Evaluation on this independent dataset exhibits distributional shift, which is expected. Reported synthetic metrics reflect rule recovery of the local generator and do not guarantee equivalent real-world performance on bank or production payment streams.",
+  "operational_degradation_summary": {
+    "finding": "Severe operational triage degradation under cross-generator distribution shift.",
+    "tree_models": "0/15 fraud detected (0% recall, 0% precision) due to tight generator-rule boundary fitting.",
+    "neural_models": "15/15 fraud detected (100% recall), but high false positive rate (14.7% and 4.3% precision).",
+    "conclusion": "High ROC-AUC does not guarantee operational transferability; re-calibration on in-distribution data is essential."
+  },
+  "methodological_notes": "Models were trained exclusively on the primary 15,000 synthetic transactions (data/transactions.csv). Evaluation on this secondary synthetic distribution exposes substantial domain shift. At frozen validation thresholds, tree models suffer total recall collapse, while neural networks maintain high sensitivity at the cost of excessive false alarms.",
   "metrics": [
     {
       "Model": "Random Forest",
