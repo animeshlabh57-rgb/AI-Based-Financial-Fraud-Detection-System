@@ -96,3 +96,10 @@ RISK_ACTIONS = {
     'HIGH': 'Elevated Risk: Recommend temporary transaction hold and secondary verification review.',
     'CRITICAL': 'Urgent manual fraud review recommended; consider a temporary transaction hold.'
 }
+
+# API Gateway Security & Limits
+DEFAULT_API_KEY = 'fg-analyst-key-2026-sec'
+API_KEY_ENABLED = os.environ.get('FRAUDGUARD_API_KEY_ENABLED', 'True').lower() in ('true', '1')
+VALID_API_KEYS = {k.strip() for k in os.environ.get('FRAUDGUARD_API_KEYS', f'{DEFAULT_API_KEY},admin-key-sec-9901,analyst-test-key').split(',') if k.strip()}
+MAX_BATCH_SIZE = int(os.environ.get('FRAUDGUARD_MAX_BATCH_SIZE', '5000'))
+RATE_LIMIT_PER_MINUTE = int(os.environ.get('FRAUDGUARD_RATE_LIMIT', '120'))

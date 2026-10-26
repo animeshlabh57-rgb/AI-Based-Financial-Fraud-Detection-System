@@ -1,10 +1,11 @@
 """Integration and unit tests for FraudGuard AI FastAPI RESTful microservice.
-Tests cover health check, single transaction prediction, batch prediction,
-Kafka streaming simulation endpoint, and model metadata inspection.
+Tests cover health check, authentication security, consensus scoring across 4 models,
+batch prediction, request limits, Kafka streaming modes, and model metadata inspection.
 """
 
 import unittest
 from fastapi.testclient import TestClient
+import config
 from src.api import app
 
 
@@ -13,8 +14,15 @@ class TestFraudDetectionAPI(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Initialize the FastAPI test client once for the suite."""
-        cls.client = TestClient(app)
+        """Initialize the FastAPI test client once with authenticated headers."""
+        cls.client = TestClient(
+            app,
+            headers={
+                "X-API-Key": config.DEFAULT_API_KEY,
+                "X-Analyst-ID": "analyst-automated-test",
+            },
+        )
+        cls.unauth_client = TestClient(app)
 
     def test_root_endpoint(self):
         """Test GET / returns API metadata and service identity."""
@@ -45,6 +53,20 @@ class TestFraudDetectionAPI(unittest.TestCase):
         self.assertIn("calibrated_threshold", data)
         self.assertGreater(data.get("calibrated_threshold"), 0.0)
 
+    def test_unauthenticated_request_rejected(self):
+        """Test POST /predict without API key is rejected with HTTP 401."""
+        payload = {
+            "type": "PAYMENT",
+            "amount": 100.0,
+            "oldbalanceOrg": 5000.0,
+            "newbalanceOrig": 4900.0,
+            "oldbalanceDest": 1000.0,
+            "newbalanceDest": 1100.0,
+            "step": 1,
+        }
+        res = self.unauth_client.post("/predict", json=payload)
+        self.assertEqual(res.status_code, 401)
+
     def test_predict_legitimate_transaction(self):
         """Test POST /predict with a normal, benign payment."""
         payload = {
@@ -64,6 +86,10 @@ class TestFraudDetectionAPI(unittest.TestCase):
         self.assertIn("transaction_id", data)
         self.assertIn("fraud_probability", data)
         self.assertIn("consensus_score", data)
+        self.assertIn("fraud_votes", data)
+        self.assertIn("models_checked", data)
+        self.assertIn("model_breakdown", data)
+        self.assertEqual(len(data["model_breakdown"]), 4)
         self.assertIn("prediction", data)
         self.assertIn("risk_tier", data)
         self.assertIn("balance_forensics", data)
@@ -90,6 +116,7 @@ class TestFraudDetectionAPI(unittest.TestCase):
         self.assertIn("fraud_probability", data)
         self.assertIn(data["risk_tier"], ["LOW", "MEDIUM", "HIGH", "CRITICAL"])
         self.assertTrue(data["balance_forensics"]["is_complete_depletion"])
+        self.assertGreater(data["consensus_score"], 0.0)
 
     def test_predict_validation_error(self):
         """Test POST /predict with invalid data fails validation (HTTP 422)."""
@@ -105,7 +132,7 @@ class TestFraudDetectionAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
 
     def test_batch_prediction_endpoint(self):
-        """Test POST /predict/batch scores an array of transactions."""
+        """Test POST /predict/batch scores an array of transactions with consensus."""
         payload = {
             "transactions": [
                 {
@@ -139,6 +166,9 @@ class TestFraudDetectionAPI(unittest.TestCase):
         self.assertEqual(len(data.get("results")), 2)
         self.assertIn("total_flagged_fraud", data)
         self.assertIn("total_approved", data)
+        first_item = data["results"][0]
+        self.assertIn("consensus_score", first_item)
+        self.assertIn("model_breakdown", first_item)
 
     def test_stream_publish_endpoint(self):
         """Test POST /stream/publish simulates publishing transaction to Kafka stream."""
@@ -153,12 +183,29 @@ class TestFraudDetectionAPI(unittest.TestCase):
             "nameOrig": "C1003",
             "nameDest": "C2003"
         }
-        response = self.client.post("/stream/publish", json=payload)
+        response = self.client.post("/stream/publish?mode=simulation", json=payload)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data.get("status"), "stream_processed")
+        self.assertEqual(data.get("streaming_engine"), "simulated_broker")
         self.assertIn("producer_receipt", data)
         self.assertIn("streaming_alert", data)
+
+    def test_stream_publish_live_fails_without_broker(self):
+        """Test POST /stream/publish with mode=live fails clearly when broker is absent."""
+        payload = {
+            "type": "TRANSFER",
+            "amount": 5000.0,
+            "oldbalanceOrg": 10000.0,
+            "newbalanceOrig": 5000.0,
+            "oldbalanceDest": 0.0,
+            "newbalanceDest": 5000.0,
+            "step": 1,
+        }
+        response = self.client.post("/stream/publish?mode=live", json=payload)
+        # Should return 503 because live broker on localhost:9092 is not running
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("Live Kafka streaming unavailable", response.json()["detail"])
 
 
 if __name__ == "__main__":

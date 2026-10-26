@@ -156,16 +156,22 @@ class TransactionStreamProducer:
     def __init__(self, bootstrap_servers: str = config.KAFKA_BOOTSTRAP_SERVERS,
                  topic: str = config.KAFKA_TRANSACTIONS_TOPIC,
                  use_simulated: bool = False,
-                 simulated_broker: SimulatedStreamingBroker | None = None):
+                 simulated_broker: SimulatedStreamingBroker | None = None,
+                 allow_fallback: bool = True):
         self.bootstrap_servers = bootstrap_servers
         self.topic = topic
         self.use_simulated = use_simulated
+        self.allow_fallback = allow_fallback
         self._broker = simulated_broker or SimulatedStreamingBroker.get_shared_broker()
         self._live_producer = None
         self._sent_count = 0
 
         if not self.use_simulated:
             self._init_live_producer()
+
+    @property
+    def is_live(self) -> bool:
+        return not self.use_simulated and self._live_producer is not None
 
     def _init_live_producer(self):
         try:
@@ -178,6 +184,11 @@ class TransactionStreamProducer:
             )
             logger.info('Connected live KafkaProducer to %s', self.bootstrap_servers)
         except Exception as exc:
+            if not self.allow_fallback:
+                raise ConnectionError(
+                    f"Live Kafka broker at '{self.bootstrap_servers}' is unreachable ({exc}). "
+                    f"Ensure Apache Kafka is running or set use_simulated=True."
+                ) from exc
             logger.warning('Live Kafka broker connection failed (%s); switching to simulated broker.', exc)
             self.use_simulated = True
 
@@ -267,7 +278,8 @@ class FraudStreamingConsumer:
                  models_dir: str = config.MODELS_DIR,
                  store: WorkspaceStore | None = None,
                  simulate_crash_before_commit: bool = False,
-                 max_retries: int = 3):
+                 max_retries: int = 3,
+                 allow_fallback: bool = True):
         self.bootstrap_servers = bootstrap_servers
         self.input_topic = input_topic
         self.alerts_topic = alerts_topic
@@ -275,6 +287,7 @@ class FraudStreamingConsumer:
         self.group_id = group_id
         self.model_mode = model_mode
         self.use_simulated = use_simulated
+        self.allow_fallback = allow_fallback
         self.models_dir = models_dir
         self.store = store
         self.simulate_crash_before_commit = simulate_crash_before_commit
@@ -305,6 +318,10 @@ class FraudStreamingConsumer:
         if not self.use_simulated:
             self._init_live_consumer()
 
+    @property
+    def is_live(self) -> bool:
+        return not self.use_simulated and self._live_consumer is not None
+
     def _init_live_consumer(self):
         try:
             from kafka import KafkaConsumer, KafkaProducer
@@ -324,6 +341,11 @@ class FraudStreamingConsumer:
             )
             logger.info('Connected live KafkaConsumer to %s on %s', self.bootstrap_servers, self.input_topic)
         except Exception as exc:
+            if not self.allow_fallback:
+                raise ConnectionError(
+                    f"Live Kafka broker at '{self.bootstrap_servers}' is unreachable ({exc}). "
+                    f"Ensure Apache Kafka is running or set use_simulated=True."
+                ) from exc
             logger.warning('Live Kafka consumer connection failed (%s); switching to simulated broker.', exc)
             self.use_simulated = True
 

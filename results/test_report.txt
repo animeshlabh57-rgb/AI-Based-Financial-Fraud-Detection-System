@@ -1,23 +1,45 @@
-test_account_can_reopen_all_pages_after_sign_out (test_dashboard.TestDashboard.test_account_can_reopen_all_pages_after_sign_out) ... 2026-10-19 02:46:14.040 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-19 02:46:16.049 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+test_batch_prediction_endpoint (test_api.TestFraudDetectionAPI.test_batch_prediction_endpoint)
+Test POST /predict/batch scores an array of transactions with consensus. ... ok
+test_health_check_endpoint (test_api.TestFraudDetectionAPI.test_health_check_endpoint)
+Test GET /health verifies model pipeline readiness. ... ok
+test_models_info_endpoint (test_api.TestFraudDetectionAPI.test_models_info_endpoint)
+Test GET /models/info returns metadata and weights. ... ok
+test_predict_fraudulent_cash_out_transaction (test_api.TestFraudDetectionAPI.test_predict_fraudulent_cash_out_transaction)
+Test POST /predict with a classic fraud pattern: full balance depletion on CASH_OUT. ... ok
+test_predict_legitimate_transaction (test_api.TestFraudDetectionAPI.test_predict_legitimate_transaction)
+Test POST /predict with a normal, benign payment. ... ok
+test_predict_validation_error (test_api.TestFraudDetectionAPI.test_predict_validation_error)
+Test POST /predict with invalid data fails validation (HTTP 422). ... ok
+test_root_endpoint (test_api.TestFraudDetectionAPI.test_root_endpoint)
+Test GET / returns API metadata and service identity. ... ok
+test_stream_publish_endpoint (test_api.TestFraudDetectionAPI.test_stream_publish_endpoint)
+Test POST /stream/publish simulates publishing transaction to Kafka stream. ... ok
+test_stream_publish_live_fails_without_broker (test_api.TestFraudDetectionAPI.test_stream_publish_live_fails_without_broker)
+Test POST /stream/publish with mode=live fails clearly when broker is absent. ... ok
+test_unauthenticated_request_rejected (test_api.TestFraudDetectionAPI.test_unauthenticated_request_rejected)
+Test POST /predict without API key is rejected with HTTP 401. ... ok
+test_account_can_reopen_all_pages_after_sign_out (test_dashboard.TestDashboard.test_account_can_reopen_all_pages_after_sign_out) ... 2026-10-27 03:01:04.693 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-27 03:01:06.442 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_all_models_can_score_a_transaction (test_dashboard.TestDashboard.test_all_models_can_score_a_transaction) ... 2026-10-19 02:46:16.635 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-19 02:46:17.843 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_all_models_can_score_a_transaction (test_dashboard.TestDashboard.test_all_models_can_score_a_transaction) ... 2026-10-27 03:01:07.069 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-27 03:01:08.451 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_default_single_comparison_evaluates_and_saves_all_models (test_dashboard.TestDashboard.test_default_single_comparison_evaluates_and_saves_all_models) ... 2026-10-19 02:46:18.481 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-19 02:46:19.335 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_default_single_comparison_evaluates_and_saves_all_models (test_dashboard.TestDashboard.test_default_single_comparison_evaluates_and_saves_all_models) ... 2026-10-27 03:01:09.121 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-27 03:01:10.033 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_demo_batch_scan_survives_a_new_sign_in (test_dashboard.TestDashboard.test_demo_batch_scan_survives_a_new_sign_in) ... 2026-10-19 02:46:20.176 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-19 02:46:22.501 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_demo_batch_scan_survives_a_new_sign_in (test_dashboard.TestDashboard.test_demo_batch_scan_survives_a_new_sign_in) ... 2026-10-27 03:01:10.915 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-27 03:01:13.055 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_incorrect_password_does_not_open_workspace (test_dashboard.TestDashboard.test_incorrect_password_does_not_open_workspace) ... 2026-10-19 02:46:23.175 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_incorrect_password_does_not_open_workspace (test_dashboard.TestDashboard.test_incorrect_password_does_not_open_workspace) ... 2026-10-27 03:01:13.746 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_logged_out_data_is_protected (test_dashboard.TestDashboard.test_logged_out_data_is_protected) ... 2026-10-19 02:46:24.084 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_logged_out_data_is_protected (test_dashboard.TestDashboard.test_logged_out_data_is_protected) ... 2026-10-27 03:01:14.717 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_saved_dataset_and_analysis_reopen_only_for_their_owner (test_dashboard.TestDashboard.test_saved_dataset_and_analysis_reopen_only_for_their_owner) ... 2026-10-19 02:46:25.024 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-19 02:46:25.787 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_saved_dataset_and_analysis_reopen_only_for_their_owner (test_dashboard.TestDashboard.test_saved_dataset_and_analysis_reopen_only_for_their_owner) ... 2026-10-27 03:01:15.714 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-27 03:01:16.678 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
-test_switching_models_keeps_the_correct_saved_analysis_reference (test_dashboard.TestDashboard.test_switching_models_keeps_the_correct_saved_analysis_reference) ... 2026-10-19 02:46:26.351 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_switching_models_keeps_the_correct_saved_analysis_reference (test_dashboard.TestDashboard.test_switching_models_keeps_the_correct_saved_analysis_reference) ... 2026-10-27 03:01:17.288 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
 test_class_distribution_integrity (test_data_loader.TestDataLoader.test_class_distribution_integrity)
 Verifies that fraud and legitimate class counts sum to total rows. ... [DataLoader] Successfully loaded dataset: 'C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\data\transactions.csv' (15000 rows, 9 columns)
@@ -64,7 +86,7 @@ test_oversampling_preserves_categorical_transactions (test_ml_dl_workflow.TestPr
                    Fraudulent (Class 1): 8,865 (50.00%)
                    Balanced Ratio:       1:1
 findfont: Failed to find font weight semibold for DejaVu Sans, now using 700.
-[ImbalanceHandler] Saved SMOTE comparison plot: 'C:\Users\anime\AppData\Local\Temp\tmpp5fhm8iv\class_distribution_before_after_smote.png'
+[ImbalanceHandler] Saved SMOTE comparison plot: 'C:\Users\anime\AppData\Local\Temp\tmptkc11at8\class_distribution_before_after_smote.png'
 -----------------------------------------------------------------
 
 ok
@@ -92,6 +114,22 @@ ok
 test_transform_new_data_alignment (test_preprocessor.TestDataPreprocessor.test_transform_new_data_alignment)
 Verifies transform_new_data aligns column dimensions with training features. ... [DataLoader] Successfully loaded dataset: 'C:\Users\anime\OneDrive\Desktop\FINANCIAL FRAUD DETECTION\data\transactions.csv' (15000 rows, 9 columns)
 ok
+test_case_lifecycle_and_audit_trail (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_case_lifecycle_and_audit_trail)
+Verify full case lifecycle and immutable audit trail. ... ok
+test_concurrent_writes_wal_mode (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_concurrent_writes_wal_mode)
+Test high-concurrency case creation across multiple threads under WAL mode. ... ok
+test_cost_threshold_simulator (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_cost_threshold_simulator)
+Verify threshold cost simulation and optimal threshold computation. ... ok
+test_crash_and_replay_idempotency (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_crash_and_replay_idempotency)
+Simulate a worker crash after writing a prediction to the database ... Simulating worker process crash after database save before offset commit!
+ok
+test_cross_tenant_isolation (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_cross_tenant_isolation)
+Verify Tenant A cannot access Tenant B's data or analysis runs. ... ok
+test_dead_letter_queue_on_poison_message (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_dead_letter_queue_on_poison_message)
+Verify invalid/poisonous message is routed to DLQ without crashing consumer. ... Message routed to DLQ topic financial.transactions.dlq: Schema validation failure: could not convert string to float: 'NOT_A_NUMBER'
+ok
+test_model_registry_and_rollback (test_reliability_and_investigation.TestReliabilityAndInvestigation.test_model_registry_and_rollback)
+Verify model version registration and atomic rollback. ... ok
 test_balanced_transaction_is_not_declared_fraud_or_legitimate (test_transaction_explanation.TestTransactionExplanation.test_balanced_transaction_is_not_declared_fraud_or_legitimate) ... ok
 test_cash_in_direction_is_explained (test_transaction_explanation.TestTransactionExplanation.test_cash_in_direction_is_explained) ... ok
 test_exact_balance_features_and_ratios (test_transaction_explanation.TestTransactionExplanation.test_exact_balance_features_and_ratios) ... ok
@@ -101,9 +139,9 @@ test_model_threshold_equality_flags_and_supplied_label_is_separate (test_transac
 test_no_label_is_fabricated_from_model_prediction (test_transaction_explanation.TestTransactionExplanation.test_no_label_is_fabricated_from_model_prediction) ... ok
 test_null_and_empty_inputs_are_safe (test_transaction_explanation.TestTransactionExplanation.test_null_and_empty_inputs_are_safe) ... ok
 test_partial_and_nonfinite_inputs_do_not_become_zero (test_transaction_explanation.TestTransactionExplanation.test_partial_and_nonfinite_inputs_do_not_become_zero) ... ok
-test_renderer_heading_matches_decision_and_can_hide_duplicate_table (test_transaction_explanation.TestTransactionExplanation.test_renderer_heading_matches_decision_and_can_hide_duplicate_table) ... 2026-10-19 02:46:32.474 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-19 02:46:32.764 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
-2026-10-19 02:46:33.056 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+test_renderer_heading_matches_decision_and_can_hide_duplicate_table (test_transaction_explanation.TestTransactionExplanation.test_renderer_heading_matches_decision_and_can_hide_duplicate_table) ... 2026-10-27 03:01:24.844 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-27 03:01:25.205 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-10-27 03:01:25.549 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
 ok
 test_zero_opening_balance_has_no_infinite_ratio (test_transaction_explanation.TestTransactionExplanation.test_zero_opening_balance_has_no_infinite_ratio) ... ok
 test_active_workspace_is_owned_and_persists_across_restarts (test_workspace_store.TestWorkspaceStore.test_active_workspace_is_owned_and_persists_across_restarts) ... ok
@@ -121,6 +159,6 @@ test_unicode_user_and_normalized_authentication (test_workspace_store.TestWorksp
 test_untrusted_text_is_stored_as_data (test_workspace_store.TestWorkspaceStore.test_untrusted_text_is_stored_as_data) ... ok
 
 ----------------------------------------------------------------------
-Ran 69 tests in 28.578s
+Ran 86 tests in 31.610s
 
 OK

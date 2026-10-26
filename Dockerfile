@@ -2,7 +2,7 @@
 # FraudGuard AI - Production Docker Container
 # Multi-purpose container supporting FastAPI REST API (8000) & Streamlit (8501)
 # ==============================================================================
-FROM python:3.11-slim AS base
+FROM python:3.12-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -32,9 +32,9 @@ RUN mkdir -p /app/.cache/matplotlib /app/storage /app/logs /app/results
 
 EXPOSE 8000 8501
 
-# Health check to ensure microservice responsiveness
+# Health check supporting both FastAPI (8000) and Streamlit dashboard (8501)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/health || curl -f http://localhost:8501/_stcore/health || exit 1
 
 # Default command: launch FastAPI microservice
 CMD ["uvicorn", "src.api:app", "--host", "0.0.0.0", "--port", "8000"]

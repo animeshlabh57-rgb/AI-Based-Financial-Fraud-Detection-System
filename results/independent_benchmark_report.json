@@ -1,0 +1,72 @@
+{
+  "benchmark_file": "paysim_sample_1000.csv",
+  "evaluated_at_utc": "2026-10-26T21:29:37.321589+00:00",
+  "dataset_summary": {
+    "total_rows": 1000,
+    "fraud_rows": 15,
+    "fraud_prevalence_pct": 1.5
+  },
+  "methodological_notes": "Models were trained exclusively on the 15,000 local synthetic benchmark dataset. Evaluation on this independent dataset exhibits distributional shift, which is expected. Reported synthetic metrics reflect rule recovery of the local generator and do not guarantee equivalent real-world performance on bank or production payment streams.",
+  "metrics": [
+    {
+      "Model": "Random Forest",
+      "Family": "Machine Learning",
+      "Threshold": 0.74,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "F1-Score": 0.0,
+      "Average Precision (AP)": 0.06879825974913291,
+      "ROC-AUC": 0.8782741116751269,
+      "Accuracy": 0.979,
+      "True Positives (TP)": 0,
+      "False Positives (FP)": 6,
+      "True Negatives (TN)": 979,
+      "False Negatives (FN)": 15
+    },
+    {
+      "Model": "XGBoost",
+      "Family": "Machine Learning",
+      "Threshold": 0.9445438385009766,
+      "Precision": 0.0,
+      "Recall": 0.0,
+      "F1-Score": 0.0,
+      "Average Precision (AP)": 0.044476943570564594,
+      "ROC-AUC": 0.8251099830795262,
+      "Accuracy": 0.839,
+      "True Positives (TP)": 0,
+      "False Positives (FP)": 146,
+      "True Negatives (TN)": 839,
+      "False Negatives (FN)": 15
+    },
+    {
+      "Model": "Deep Neural Network",
+      "Family": "Deep Learning",
+      "Threshold": 0.9993293623636901,
+      "Precision": 0.14705882352941177,
+      "Recall": 1.0,
+      "F1-Score": 0.2564102564102564,
+      "Average Precision (AP)": 0.17294477940472772,
+      "ROC-AUC": 0.9634517766497461,
+      "Accuracy": 0.913,
+      "True Positives (TP)": 15,
+      "False Positives (FP)": 87,
+      "True Negatives (TN)": 898,
+      "False Negatives (FN)": 0
+    },
+    {
+      "Model": "Deep Autoencoder",
+      "Family": "Deep Learning",
+      "Threshold": 0.8706721772244265,
+      "Precision": 0.042735042735042736,
+      "Recall": 1.0,
+      "F1-Score": 0.08196721311475409,
+      "Average Precision (AP)": 0.15888609452168173,
+      "ROC-AUC": 0.9118104906937394,
+      "Accuracy": 0.664,
+      "True Positives (TP)": 15,
+      "False Positives (FP)": 336,
+      "True Negatives (TN)": 649,
+      "False Negatives (FN)": 0
+    }
+  ]
+}
