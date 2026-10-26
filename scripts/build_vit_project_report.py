@@ -813,7 +813,7 @@ def build_report_story(registry, is_pass2=False):
         "Tree ensembles suffered total recall collapse (0/15 detected) due to shifted feature boundaries, while neural networks detected all 15 frauds (100% recall) with elevated false alarms, "
         "demonstrating that offline synthetic benchmarks cannot replace live telemetry. The platform is containerized as a FastAPI microservice with a Streamlit analyst workspace, "
         "authenticated SQLite storage with salted PBKDF2/bcrypt hashing, 5-failure login throttling, manual Kafka offset commits with outbox crash recovery, and zero hardcoded production credentials. "
-        "The complete system passes 97/97 automated regression tests with sub-100 ms inference latency.",
+        "The complete system passes 104/104 automated regression tests with sub-100 ms inference latency.",
         "abstract_body"
     ))
     story.append(sp(4))
@@ -881,7 +881,7 @@ def build_report_story(registry, is_pass2=False):
     story.append(b("Design of a multi-model consensus voting and scoring engine evaluating four distinct models against validation-tuned thresholds (<i>V</i>(<b>x</b>) in {0..4} and <i>R</i>(<b>x</b>)), coupled with an operational analyst triage policy."))
     story.append(b("Integration of TreeSHAP for global and local feature attributions paired with automated quantitative forensic balance invariant checks (&Delta;<sub>orig</sub>, &Delta;<sub>dest</sub>, <i>R</i><sub>deplete</sub>)."))
     story.append(b("Engineering of an enterprise-grade RESTful API service (FastAPI) and an interactive multi-tenant analyst workspace (Streamlit), hardened with salted PBKDF2/bcrypt hashing, brute-force lockout throttling, RBAC, and SQLite audit logging."))
-    story.append(b("Construction of an event-driven Apache Kafka real-time streaming pipeline capable of processing live transaction feeds with sub-150 ms end-to-end latency, validated across 97 automated unit, integration, and security regression checks."))
+    story.append(b("Construction of an event-driven Apache Kafka real-time streaming pipeline capable of processing live transaction feeds with sub-150 ms end-to-end latency, validated across 104 automated unit, integration, and security regression checks."))
     story.append(pb())
 
     # =========================================================
@@ -924,7 +924,7 @@ def build_report_story(registry, is_pass2=False):
         ["Pumsirirat & Yan (2018) [4]", "Autoencoder, RBM", "Unsupervised Normal-only", "None", "Offline Prototype", "Uncalibrated reconstruction distance."],
         ["Shanaa & Abdallah (2025) [14]", "Supervised + Anomaly", "SMOTE on whole data", "None", "Experimental script", "Data leakage risk; no web microservice."],
         ["Iqbal et al. (2025) [15]", "RF, XGBoost", "Standard SMOTE", "SHAP and LIME", "Jupyter Notebook", "Supervised-only; no streaming ingestion."],
-        ["FraudGuard AI (This Work)", "RF, XGBoost, Deep Neural Network, Deep Autoencoder", "SMOTE-NC on Train Only (Leakage-Free)", "TreeSHAP + Balance Forensics", "FastAPI + Streamlit + Kafka + SQLite", "Consensus voting & score; 97/97 automated test pass."]
+        ["FraudGuard AI (This Work)", "RF, XGBoost, Deep Neural Network, Deep Autoencoder", "SMOTE-NC on Train Only (Leakage-Free)", "TreeSHAP + Balance Forensics", "FastAPI + Streamlit + Kafka + SQLite", "Consensus voting & score; 104/104 automated test pass."]
     ]
     story.append(create_styled_table(lit_headers, lit_rows, [85, 80, 75, 65, 65, 63]))
     story.append(sp(6))
@@ -954,7 +954,7 @@ def build_report_story(registry, is_pass2=False):
     story.append(b("<b>Objective 4:</b> Integrate explainable AI capabilities, embedding TreeSHAP attributions and domain-specific balance forensics within an automated audit workflow."))
     story.append(b("<b>Objective 5:</b> Develop and containerize a secure, authenticated RESTful API (FastAPI) and interactive dashboard (Streamlit) featuring salted PBKDF2/bcrypt hashing, lockout throttling, RBAC, and SQLite audit storage."))
     story.append(b("<b>Objective 6:</b> Construct an event-driven Apache Kafka real-time streaming pipeline capable of processing live transaction feeds with sub-150 ms end-to-end latency."))
-    story.append(b("<b>Objective 7:</b> Validate system robustness through a 97-test automated regression suite and comprehensive latency/concurrency benchmarking."))
+    story.append(b("<b>Objective 7:</b> Validate system robustness through a 104-test automated regression suite and comprehensive latency/concurrency benchmarking."))
 
     story.append(PageTracker("sec2_4", registry))
     story.append(p("2.4 Problem Statement", "h1"))
@@ -974,7 +974,7 @@ def build_report_story(registry, is_pass2=False):
     story.append(b("<b>Phase 2 (Weeks 4–7):</b> Feature engineering of balance forensics, training-only SMOTE-NC pipeline implementation, and baseline model development (RF and XGBoost)."))
     story.append(b("<b>Phase 3 (Weeks 8–10):</b> Deep neural network and autoencoder training, threshold tuning, and representation validation."))
     story.append(b("<b>Phase 4 (Weeks 11–13):</b> Multi-model consensus voting engine formulation, TreeSHAP explainability integration, and Streamlit workspace construction."))
-    story.append(b("<b>Phase 5 (Weeks 14–16):</b> Apache Kafka streaming engine implementation, FastAPI hardening, security lockout testing, 97-test test suite execution, and performance benchmarking."))
+    story.append(b("<b>Phase 5 (Weeks 14–16):</b> Apache Kafka streaming engine implementation, FastAPI hardening, security lockout testing, 104-test test suite execution, and performance benchmarking."))
     story.append(pb())
 
     # =========================================================
@@ -1346,8 +1346,8 @@ def build_report_story(registry, is_pass2=False):
     story.append(PageTracker("sec5_2_1", registry))
     story.append(p("5.2.1 Automated Test Suite & Regression Testing", "h2"))
     story.append(p(
-        "System reliability was verified through an exhaustive 97-test automated regression suite (tests/). "
-        "All 97 tests achieved a 100% pass rate with zero failures. Table 5.3 summarizes the automated test coverage across all functional and security domains."
+        "System reliability was verified through an exhaustive 104-test automated regression suite (tests/). "
+        "All 104 tests achieved a 100% pass rate with zero failures. Table 5.3 summarizes the automated test coverage across all functional and security domains."
     ))
     story.append(sp(4))
 
@@ -1362,9 +1362,9 @@ def build_report_story(registry, is_pass2=False):
         ["Forensics & Explainability", "11 tests", "Validates exact balance forensics, TreeSHAP attributions, null/non-finite safety, and unbiased direction analysis.", "100% Pass (11/11)"],
         ["Model Consensus Engine", "11 tests", "Verifies threshold tuning, multi-model consensus voting, risk tier mapping, and batch inference.", "100% Pass (11/11)"],
         ["Analyst Dashboard Workflows", "13 tests", "Tests reactive Streamlit pages, session state reload, batch CSV scoring UI, and model comparison views.", "100% Pass (13/13)"],
-        ["Reliability & Crash Recovery", "7 tests", "Tests worker crash replay, outbox alert persistence, idempotent recovery without duplicates, and WAL concurrency.", "100% Pass (7/7)"],
+        ["Reliability & Crash Recovery", "14 tests", "Tests worker crash replay, outbox alert persistence, idempotent recovery without duplicates, and WAL concurrency.", "100% Pass (14/14)"],
         ["Deep Representation Models", "2 tests", "Tests deep neural network training, autoencoder reconstruction loss, and anomaly score calibration.", "100% Pass (2/2)"],
-        ["Total Automated Tests", "97 tests", "Comprehensive End-to-End System Verification (Unit, Integration, Security, and Reliability)", "100% PASS (97/97)"]
+        ["Total Automated Tests", "104 tests", "Comprehensive End-to-End System Verification (Unit, Integration, Security, and Reliability)", "100% PASS (104/104)"]
     ]
     story.append(create_styled_table(test_headers, test_rows, [95, 55, 215, 68]))
     story.append(sp(6))
@@ -1635,7 +1635,7 @@ def build_report_story(registry, is_pass2=False):
     story.append(b("<b>Multi-Model Consensus Fusion:</b> A mathematically grounded consensus engine combining tree ensembles and deep representation learning, achieving 0.9091 precision, 0.8889 recall, and cutting false alarms from 9 to 4."))
     story.append(b("<b>Leakage-Free Feature Engineering:</b> Strict stratified partitioning preserving pristine test distributions, paired with domain-specific balance forensics (&Delta;<sub>orig</sub>, &Delta;<sub>dest</sub>, <i>R</i><sub>deplete</sub>)."))
     story.append(b("<b>Operational Explainability:</b> Integration of TreeSHAP and quantitative financial balance forensics to generate verifiable attributions for compliance workflows (GDPR Art. 22)."))
-    story.append(b("<b>Enterprise-Hardened Architecture:</b> A containerized FastAPI microservice with an interactive Streamlit workspace, SQLite storage with PBKDF2/bcrypt, brute-force lockout, manual Kafka offset commits, outbox alert crash recovery, and 97/97 automated test pass."))
+    story.append(b("<b>Enterprise-Hardened Architecture:</b> A containerized FastAPI microservice with an interactive Streamlit workspace, SQLite storage with PBKDF2/bcrypt, brute-force lockout, manual Kafka offset commits, outbox alert crash recovery, and 104/104 automated test pass."))
 
     story.append(PageTracker("sec8_2", registry))
     story.append(p("8.2 Limitations & Real-World Deployment Readiness", "h1"))
